@@ -6,6 +6,7 @@
 #include <vector>
 
 // #define DEBUG 1
+#define SUPER_DEBUG 1
 // #define TIMING 1
 
 enum {
@@ -21,21 +22,35 @@ enum {
   EQUAL_CHUNKING = 0,
 };
 
-std::vector<int> calculateSumVec(const std::vector<int> &vec) {
+std::vector<int> make_zeros(const std::vector<int> &vec, int rank) {
+  if (rank == 1) {
+    return vec;
+  }
+  std::vector<int> newVec(vec.size());
+  for (int i = 0; i < vec.size(); i += 5) {
+    newVec[i] = 0;
+  }
+  return newVec;
+}
+
+std::vector<int> calculateSumVec(const std::vector<int> &vec, int rank) {
 #if DEBUG == 1
   printf("calculating sum \n");
 #endif
-
-  std::vector<int> result(vec.size());
-  result[0] = vec[0];
-  for (int i = 1; i < vec.size(); i++) {
-    result[i] = vec[i] + result[i - 1];
+  auto vecCpy = make_zeros(vec, rank);
+  for (int i = 0; i < vecCpy.size(); i++) {
+    if (vecCpy[i] == 0) {
+      continue;
+    }
+    for (int j = i + 1; j < 10000000; j++) {
+      vecCpy[i] = vecCpy[i] + j;
+    }
   }
-  return result;
+  return vecCpy;
 }
 
 void debug_vector(std::vector<int> vec) {
-#if DEBUG == 1
+#if SUPER_DEBUG == 1
   printf("[");
   for (int i = 0; i < vec.size(); i++) {
     printf("%d", vec[i]);
@@ -117,7 +132,7 @@ std::vector<int> combineAndSendOutFn(const int children_num) {
 }
 
 void children_code(
-    std::vector<std::function<std::vector<int>(const std::vector<int> &)>>
+    std::vector<std::function<std::vector<int>(const std::vector<int> &, int)>>
         filter_list,
     int rank) {
   int vec_size;
@@ -130,7 +145,7 @@ void children_code(
   printf("filter list has %lu\n", filter_list.size());
 #endif
   for (const auto &filterFun : filter_list) {
-    original_vector = filterFun(original_vector);
+    original_vector = filterFun(original_vector, rank);
   }
   MPI_Send(&vec_size, 1, MPI_INT, RANK_0, VEC_SIZE, MPI_COMM_WORLD);
   MPI_Send(original_vector.data(), original_vector.size(), MPI_INT, RANK_0,
@@ -171,7 +186,7 @@ int main(int argc, char **argv) {
     send_out_work(CHUNKS, parent_vec, 0);
   }
 
-  std::vector<std::function<std::vector<int>(const std::vector<int> &)>>
+  std::vector<std::function<std::vector<int>(const std::vector<int> &, int)>>
       filter_list;
   filter_list.emplace_back(calculateSumVec);
   filter_list.emplace_back(calculateSumVec);
@@ -192,7 +207,7 @@ int main(int argc, char **argv) {
       int start = std::get<0>(filterOrder[filter_count]);
       int end = std::get<1>(filterOrder[filter_count]);
       auto filterSlice = std::vector<
-          std::function<std::vector<int>(const std::vector<int> &)>>(
+          std::function<std::vector<int>(const std::vector<int> &, int)>>(
           filter_list.begin() + start, filter_list.begin() + end);
       children_code(filterSlice, rank);
     } else {
@@ -210,13 +225,13 @@ int main(int argc, char **argv) {
   if (rank != 0) {
     int start = std::get<0>(filterOrder[filter_count]);
     int end = std::get<1>(filterOrder[filter_count]);
-    auto filterSlice =
-        std::vector<std::function<std::vector<int>(const std::vector<int> &)>>(
-            filter_list.begin() + start, filter_list.begin() + end);
+    auto filterSlice = std::vector<
+        std::function<std::vector<int>(const std::vector<int> &, int)>>(
+        filter_list.begin() + start, filter_list.begin() + end);
     children_code(filterSlice, rank);
   } else {
     auto final = combine_work(CHUNKS);
-#if DEBUG == 1
+#if SUPER_DEBUG == 1
     debug_vector(final);
 #endif
   }
