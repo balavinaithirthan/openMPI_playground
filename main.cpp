@@ -15,6 +15,10 @@ enum {
   VEC_DATA = 1,
 };
 
+enum {
+  EQUAL_CHUNKING = 0,
+};
+
 std::vector<int> calculateSumVec(const std::vector<int> &vec) {
 #if DEBUG == 1
   printf("calculating sum \n");
@@ -28,7 +32,6 @@ std::vector<int> calculateSumVec(const std::vector<int> &vec) {
 }
 
 void debug_vector(std::vector<int> vec) {
-#if DEBUG == 1
   printf("[");
   for (int i = 0; i < vec.size(); i++) {
     printf("%d", vec[i]);
@@ -37,22 +40,42 @@ void debug_vector(std::vector<int> vec) {
     }
   }
   printf("]\n");
-#endif
 }
 
-void flush() {}
+void flush(std::vector<int> vec) {
+  std::vector<int> newVec = std::vector<int>{};
+  for (int i = 0; i < vec.size(); i++) {
+    if (vec[i] == 0) {
+      continue;
+    } else {
+      newVec.emplace_back(vec[i]);
+    }
+  }
+}
 
 void redistribute() {}
 
 void send_out_work(int children_num, std::vector<int> parent_vec,
                    int redistribution_strategy) {
-  int chunk_size = parent_vec.size() / children_num;
-  for (int i = 0; i < children_num; i++) {
-    std::vector<int> chunk((parent_vec.begin() + (i * chunk_size)),
-                           parent_vec.begin() + ((i + 1) * chunk_size));
-    MPI_Send(&chunk_size, 1, MPI_INT, i + 1, VEC_SIZE, MPI_COMM_WORLD);
-    MPI_Send(chunk.data(), chunk.size(), MPI_INT, i + 1, VEC_DATA,
+  if (redistribution_strategy == EQUAL_CHUNKING) {
+    int chunk_size = parent_vec.size() / children_num;
+    for (int i = 0; i < children_num - 1; i++) {
+      std::vector<int> chunk((parent_vec.begin() + (i * chunk_size)),
+                             parent_vec.begin() + ((i + 1) * chunk_size));
+      MPI_Send(&chunk_size, 1, MPI_INT, i + 1, VEC_SIZE, MPI_COMM_WORLD);
+      MPI_Send(chunk.data(), chunk.size(), MPI_INT, i + 1, VEC_DATA,
+               MPI_COMM_WORLD);
+    }
+    // send out last non even chunk
+    int last_index = children_num - 1;
+    std::vector<int> chunk((parent_vec.begin() + (last_index * chunk_size)),
+                           parent_vec.end());
+    size_t final_chunk_size = chunk.size();
+    MPI_Send(&final_chunk_size, 1, MPI_INT, last_index + 1, VEC_SIZE,
              MPI_COMM_WORLD);
+    MPI_Send(chunk.data(), chunk.size(), MPI_INT, last_index + 1, VEC_DATA,
+             MPI_COMM_WORLD);
+
 #if DEBUG == 1
     std::cout << "parent sending out " << i << std::endl;
     debug_vector(chunk);
@@ -83,7 +106,7 @@ std::vector<int> combineAndSendOutFn(const int children_num) {
 #if DEBUG == 1
   debug_vector(combined);
 #endif
-  flush();
+  flush(combined);
   send_out_work(children_num, combined, 0);
   return combined;
 }
@@ -126,10 +149,15 @@ int main(int argc, char **argv) {
     MPI_Abort(MPI_COMM_WORLD, 1);
   }
   if (rank == 0) {
-    const int VEC_SIZE = 100;
-    std::vector<int> parent_vec(VEC_SIZE);
-    for (int i = 0; i < VEC_SIZE; i++) {
+    const int PARENT_VEC_SIZE = 30;
+    std::vector<int> parent_vec(PARENT_VEC_SIZE);
+    for (int i = 0; i < PARENT_VEC_SIZE; i++) {
       parent_vec[i] = i;
+    }
+    if (PARENT_VEC_SIZE < size) {
+      std::cerr << "This program requires at least " << PARENT_VEC_SIZE
+                << " processes.\n ";
+      MPI_Abort(MPI_COMM_WORLD, 1);
     }
     send_out_work(CHUNKS, parent_vec, 0);
   }
@@ -179,9 +207,9 @@ int main(int argc, char **argv) {
     children_code(filterSlice, rank);
   } else {
     auto final = combine_work(CHUNKS);
-#if DEBUG == 1
+    // #if DEBUG == 1
     debug_vector(final);
-#endif
+    // #endif
   }
 
   MPI_Finalize();
