@@ -1,4 +1,3 @@
-
 #include <stdio.h>
 #include <tuple>
 #include <vector>
@@ -31,12 +30,13 @@ std::vector<std::tuple<int, int>> load_balanced_indices(std::vector<int> vec,
       non_zero_count++;
     }
     if (non_zero_count == chunk_size) {
-      indices.emplace_back(start, i);
+      indices.emplace_back(start, i); // Make the last index non-inclusive
       non_zero_count = 0;
       done_children += 1;
-      start = i + 1;
+      start = i;
       if (done_children == children_num - 1) {
-        indices.emplace_back(start, vec.size() - 1);
+        indices.emplace_back(start,
+                             vec.size()); // Make the last index non-inclusive
         break;
       }
     }

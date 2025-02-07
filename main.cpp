@@ -7,7 +7,7 @@
 
 // #define DEBUG 1
 #define SUPER_DEBUG 1
-// #define TIMING 1
+#define TIMING 1
 
 enum {
   RANK_0 = 0,
@@ -23,35 +23,66 @@ enum {
   LOAD_BALANCED = 1,
 };
 
-std::vector<int> load_balanced_indices(std::vector<int> vec, int children_num) {
+void debug_vector(std::vector<int> vec) {
+#if SUPER_DEBUG == 1
+  printf("[");
+  for (int i = 0; i < vec.size(); i++) {
+    printf("%d", vec[i]);
+    if (i != vec.size() - 1) {
+      printf(", ");
+    }
+  }
+  printf("]\n");
+#endif
+}
+
+void debug_indices(std::vector<std::tuple<int, int>> indices) {
+  for (int i = 0; i < indices.size(); i++) {
+    printf("start: %d, end: %d\n", std::get<0>(indices[i]),
+           std::get<1>(indices[i]));
+  }
+}
+
+std::vector<std::tuple<int, int>> load_balanced_indices(std::vector<int> vec,
+                                                        int children_num) {
   std::vector<std::tuple<int, int>> indices;
   int non_zero_count = 0;
   for (int i = 0; i < vec.size();
        i++) { // TODO: children could keep track of their non_zero_count
-    if (vec[i] == 0) {
+    if (vec[i] != 0) {
       non_zero_count++;
     }
   }
+  if (non_zero_count < children_num) {
+    printf("error there are not enough values for a proc to take on  "
+           "children_num\n");
+    return indices;
+  }
+  if (non_zero_count == 0) {
+    printf("error non_zero_count == 0\n");
+    return indices;
+  }
   int chunk_size = non_zero_count / children_num;
   int start = 0;
-  int end = 0;
   non_zero_count = 0;
   int done_children = 0;
   for (int i = 0; i < vec.size(); i++) {
-    if (vec[i] == 0) {
+    if (vec[i] != 0) {
       non_zero_count++;
     }
     if (non_zero_count == chunk_size) {
+      indices.emplace_back(start, i); // Make the last index non-inclusive
       non_zero_count = 0;
       done_children += 1;
-      start = end;
+      start = i;
       if (done_children == children_num - 1) {
-        indices.emplace_back(end, vec.size());
+        indices.emplace_back(start,
+                             vec.size()); // Make the last index non-inclusive
         break;
       }
     }
   }
-  return vec;
+  return indices;
 }
 
 std::vector<int> make_zeros(const std::vector<int> &vec, int rank) {
@@ -83,19 +114,6 @@ std::vector<int> calculateSumVec(const std::vector<int> &vec, int rank) {
     }
   }
   return vecCpy;
-}
-
-void debug_vector(std::vector<int> vec) {
-#if SUPER_DEBUG == 1
-  printf("[");
-  for (int i = 0; i < vec.size(); i++) {
-    printf("%d", vec[i]);
-    if (i != vec.size() - 1) {
-      printf(", ");
-    }
-  }
-  printf("]\n");
-#endif
 }
 
 void flush(std::vector<int> vec) {
@@ -139,28 +157,24 @@ void send_out_work(int children_num, std::vector<int> parent_vec,
   }
 
   if (redistribution_strategy == LOAD_BALANCED) { // auto flush
-    int non_zero_count = 0;
-    // Collect non-zero values
-    for (int val : parent_vec) {
-      if (val != 0) {
-        non_zero_count++;
-      }
-    }
 
-    int remainder = non_zero_count % children_num;
-    int start = 0;
-    for (int i = 0; i < children_num; i++) {
-      int chunk_size = non_zero_count / children_num;
-      if (i < remainder) {
-        chunk_size++;
-      }
-      std::vector<int> chunk(non_zero_values.begin() + start,
-                             non_zero_values.begin() + start + chunk_size);
-      start += chunk_size;
-      MPI_Send(&chunk_size, 1, MPI_INT, i + 1, VEC_SIZE, MPI_COMM_WORLD);
-      MPI_Send(chunk.data(), chunk.size(), MPI_INT, i + 1, VEC_DATA,
-               MPI_COMM_WORLD);
+    std::vector<std::tuple<int, int>> vec =
+        load_balanced_indices(parent_vec, children_num);
+    debug_indices(vec);
+    int i = 0;
+    for (auto &index : vec) {
+      int start = std::get<0>(index);
+      int end = std::get<1>(index);
+      std::vector<int> chunk(parent_vec.begin() + start,
+                             parent_vec.begin() + end);
+      int size = end - start;
+      MPI_Send(&size, 1, MPI_INT, i + 1, VEC_SIZE, MPI_COMM_WORLD);
+      MPI_Send(chunk.data(), size, MPI_INT, i + 1, VEC_DATA, MPI_COMM_WORLD);
+#if SUPER_DEBUG == 1
+      printf("parent sending to %d\n", i + 1);
       debug_vector(chunk);
+#endif
+      i++;
     }
   }
 }
