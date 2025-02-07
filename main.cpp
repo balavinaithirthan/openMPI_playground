@@ -1,3 +1,4 @@
+#include <chrono>
 #include <cstdio>
 #include <functional>
 #include <iostream>
@@ -5,6 +6,7 @@
 #include <vector>
 
 // #define DEBUG 1
+// #define TIMING 1
 
 enum {
   RANK_0 = 0,
@@ -23,6 +25,7 @@ std::vector<int> calculateSumVec(const std::vector<int> &vec) {
 #if DEBUG == 1
   printf("calculating sum \n");
 #endif
+
   std::vector<int> result(vec.size());
   result[0] = vec[0];
   for (int i = 1; i < vec.size(); i++) {
@@ -32,6 +35,7 @@ std::vector<int> calculateSumVec(const std::vector<int> &vec) {
 }
 
 void debug_vector(std::vector<int> vec) {
+#if DEBUG == 1
   printf("[");
   for (int i = 0; i < vec.size(); i++) {
     printf("%d", vec[i]);
@@ -40,6 +44,7 @@ void debug_vector(std::vector<int> vec) {
     }
   }
   printf("]\n");
+#endif
 }
 
 void flush(std::vector<int> vec) {
@@ -139,6 +144,10 @@ void children_code(
 int main(int argc, char **argv) {
   MPI_Init(&argc, &argv);
 
+#if TIMING == 1
+  auto start = std::chrono::high_resolution_clock::now();
+#endif
+
   int rank, size;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
@@ -207,10 +216,18 @@ int main(int argc, char **argv) {
     children_code(filterSlice, rank);
   } else {
     auto final = combine_work(CHUNKS);
-    // #if DEBUG == 1
+#if DEBUG == 1
     debug_vector(final);
-    // #endif
+#endif
   }
+
+#if TIMING == 1
+  auto end = std::chrono::high_resolution_clock::now();
+  std::chrono::duration<double> duration = end - start;
+  if (rank == 0) {
+    std::cout << "Time taken: " << duration.count() << " seconds" << std::endl;
+  }
+#endif
 
   MPI_Finalize();
   return 0;
