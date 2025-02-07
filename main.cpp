@@ -20,15 +20,51 @@ enum {
 
 enum {
   EQUAL_CHUNKING = 0,
+  LOAD_BALANCED = 1,
 };
+
+std::vector<int> load_balanced_indices(std::vector<int> vec, int children_num) {
+  std::vector<std::tuple<int, int>> indices;
+  int non_zero_count = 0;
+  for (int i = 0; i < vec.size();
+       i++) { // TODO: children could keep track of their non_zero_count
+    if (vec[i] == 0) {
+      non_zero_count++;
+    }
+  }
+  int chunk_size = non_zero_count / children_num;
+  int start = 0;
+  int end = 0;
+  non_zero_count = 0;
+  int done_children = 0;
+  for (int i = 0; i < vec.size(); i++) {
+    if (vec[i] == 0) {
+      non_zero_count++;
+    }
+    if (non_zero_count == chunk_size) {
+      non_zero_count = 0;
+      done_children += 1;
+      start = end;
+      if (done_children == children_num - 1) {
+        indices.emplace_back(end, vec.size());
+        break;
+      }
+    }
+  }
+  return vec;
+}
 
 std::vector<int> make_zeros(const std::vector<int> &vec, int rank) {
   if (rank == 1) {
     return vec;
   }
   std::vector<int> newVec(vec.size());
-  for (int i = 0; i < vec.size(); i += 5) {
-    newVec[i] = 0;
+  for (size_t i = 0; i < newVec.size(); ++i) {
+    if (i % 5 != 4) { // Keep every 5th element (0-based index)
+      newVec[i] = 0;
+    } else {
+      newVec[i] = vec[i];
+    }
   }
   return newVec;
 }
@@ -37,7 +73,7 @@ std::vector<int> calculateSumVec(const std::vector<int> &vec, int rank) {
 #if DEBUG == 1
   printf("calculating sum \n");
 #endif
-  auto vecCpy = make_zeros(vec, rank);
+  std::vector<int> vecCpy;
   for (int i = 0; i < vecCpy.size(); i++) {
     if (vecCpy[i] == 0) {
       continue;
@@ -73,7 +109,12 @@ void flush(std::vector<int> vec) {
   }
 }
 
-void redistribute() {}
+// std::vector<int> redistribute(std::vector<int> vec, int
+// redistribution_strategy,
+//                               int rank) {
+//   vec =
+//   return
+// }
 
 void send_out_work(int children_num, std::vector<int> parent_vec,
                    int redistribution_strategy) {
@@ -95,11 +136,32 @@ void send_out_work(int children_num, std::vector<int> parent_vec,
              MPI_COMM_WORLD);
     MPI_Send(chunk.data(), chunk.size(), MPI_INT, last_index + 1, VEC_DATA,
              MPI_COMM_WORLD);
+  }
 
-#if DEBUG == 1
-    std::cout << "parent sending out " << i << std::endl;
-    debug_vector(chunk);
-#endif
+  if (redistribution_strategy == LOAD_BALANCED) { // auto flush
+    int non_zero_count = 0;
+    // Collect non-zero values
+    for (int val : parent_vec) {
+      if (val != 0) {
+        non_zero_count++;
+      }
+    }
+
+    int remainder = non_zero_count % children_num;
+    int start = 0;
+    for (int i = 0; i < children_num; i++) {
+      int chunk_size = non_zero_count / children_num;
+      if (i < remainder) {
+        chunk_size++;
+      }
+      std::vector<int> chunk(non_zero_values.begin() + start,
+                             non_zero_values.begin() + start + chunk_size);
+      start += chunk_size;
+      MPI_Send(&chunk_size, 1, MPI_INT, i + 1, VEC_SIZE, MPI_COMM_WORLD);
+      MPI_Send(chunk.data(), chunk.size(), MPI_INT, i + 1, VEC_DATA,
+               MPI_COMM_WORLD);
+      debug_vector(chunk);
+    }
   }
 }
 
@@ -127,7 +189,7 @@ std::vector<int> combineAndSendOutFn(const int children_num) {
   debug_vector(combined);
 #endif
   flush(combined);
-  send_out_work(children_num, combined, 0);
+  send_out_work(children_num, combined, LOAD_BALANCED);
   return combined;
 }
 
@@ -173,7 +235,7 @@ int main(int argc, char **argv) {
     MPI_Abort(MPI_COMM_WORLD, 1);
   }
   if (rank == 0) {
-    const int PARENT_VEC_SIZE = 30;
+    const int PARENT_VEC_SIZE = 200;
     std::vector<int> parent_vec(PARENT_VEC_SIZE);
     for (int i = 0; i < PARENT_VEC_SIZE; i++) {
       parent_vec[i] = i;
@@ -183,13 +245,14 @@ int main(int argc, char **argv) {
                 << " processes.\n ";
       MPI_Abort(MPI_COMM_WORLD, 1);
     }
-    send_out_work(CHUNKS, parent_vec, 0);
+    send_out_work(CHUNKS, parent_vec, EQUAL_CHUNKING);
   }
 
   std::vector<std::function<std::vector<int>(const std::vector<int> &, int)>>
       filter_list;
+  filter_list.emplace_back(make_zeros);
   filter_list.emplace_back(calculateSumVec);
-  filter_list.emplace_back(calculateSumVec);
+  // filter_list.emplace_back(calculateSumVec);
   std::vector<std::tuple<int, int>> filterOrder = {
       {0, 1}, {1, 2}}; // filter start up to but not including end
 
