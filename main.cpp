@@ -1,3 +1,4 @@
+#include "Load_Balance.hpp"
 #include <chrono>
 #include <cstdio>
 #include <functional>
@@ -6,244 +7,8 @@
 #include <vector>
 
 // #define DEBUG 1
-// #define SUPER_DEBUG 1
+#define SUPER_DEBUG 1
 #define TIMING 1
-
-enum {
-  RANK_0 = 0,
-};
-
-enum {
-  VEC_SIZE = 0,
-  VEC_DATA = 1,
-};
-
-enum {
-  EQUAL_CHUNKING = 0,
-  LOAD_BALANCED = 1,
-};
-
-void debug_vector(std::vector<int> vec) {
-#if SUPER_DEBUG == 1
-  printf("[");
-  for (int i = 0; i < vec.size(); i++) {
-    printf("%d", vec[i]);
-    if (i != vec.size() - 1) {
-      printf(", ");
-    }
-  }
-  printf("]\n");
-#endif
-}
-
-void debug_indices(std::vector<std::tuple<int, int>> indices) {
-  for (int i = 0; i < indices.size(); i++) {
-    printf("start: %d, end: %d\n", std::get<0>(indices[i]),
-           std::get<1>(indices[i]));
-  }
-}
-
-std::vector<std::tuple<int, int>> load_balanced_indices(std::vector<int> vec,
-                                                        int children_num) {
-  std::vector<std::tuple<int, int>> indices;
-  int non_zero_count = 0;
-  for (int i = 0; i < vec.size();
-       i++) { // TODO: children could keep track of their non_zero_count
-    if (vec[i] != 0) {
-      non_zero_count++;
-    }
-  }
-  if (non_zero_count < children_num) {
-    printf("not enough values to take on children_num\n");
-    debug_vector(vec);
-    MPI_Abort(MPI_COMM_WORLD, 1);
-    return indices;
-  }
-  if (non_zero_count == 0) {
-    printf("error non_zero_count == 0\n");
-    debug_vector(vec);
-    MPI_Abort(MPI_COMM_WORLD, 1);
-  }
-  int chunk_size = non_zero_count / children_num;
-  int start = 0;
-  non_zero_count = 0;
-  int done_children = 0;
-  for (int i = 0; i < vec.size(); i++) {
-    if (vec[i] != 0) {
-      non_zero_count++;
-    }
-    if (non_zero_count == chunk_size) {
-      indices.emplace_back(start, i); // Make the last index non-inclusive
-      non_zero_count = 0;
-      done_children += 1;
-      start = i;
-      if (done_children == children_num - 1) {
-        indices.emplace_back(start,
-                             vec.size()); // Make the last index non-inclusive
-        break;
-      }
-    }
-  }
-  return indices;
-}
-
-std::vector<int> make_zeros(const std::vector<int> &vec, int rank) {
-  if (rank == 1) {
-    return vec;
-  }
-  std::vector<int> newVec(vec.size());
-  for (size_t i = 0; i < newVec.size(); ++i) {
-    if (i % 5 != 4) { // Keep every 5th element (0-based index)
-      newVec[i] = 0;
-    } else {
-      newVec[i] = vec[i];
-    }
-  }
-  return newVec;
-}
-
-std::vector<int> calculateSumVec(const std::vector<int> &vec, int rank) {
-#if DEBUG == 1
-  printf("calculating sum \n");
-#endif
-  std::vector<int> vecCpy(vec.size(), 0);
-  for (int i = 0; i < vec.size(); i++) {
-    if (vec[i] == 0) {
-      continue;
-    }
-    for (int j = i + 1; j < 10000000; j++) {
-      vecCpy[i] = vec[i] + j;
-      vecCpy[i] = vec[i] - j;
-    }
-  }
-  debug_vector(vecCpy);
-  return vecCpy;
-}
-
-void flush(std::vector<int> vec) {
-  std::vector<int> newVec = std::vector<int>{};
-  for (int i = 0; i < vec.size(); i++) {
-    if (vec[i] == 0) {
-      continue;
-    } else {
-      newVec.emplace_back(vec[i]);
-    }
-  }
-}
-
-// std::vector<int> redistribute(std::vector<int> vec, int
-// redistribution_strategy,
-//                               int rank) {
-//   vec =
-//   return
-// }
-
-void send_out_work(int children_num, std::vector<int> parent_vec,
-                   int redistribution_strategy) {
-  if (redistribution_strategy == LOAD_BALANCED) { // auto flush
-    std::vector<std::tuple<int, int>> vec =
-        load_balanced_indices(parent_vec, children_num);
-    debug_indices(vec);
-    if (vec.empty()) {
-      redistribution_strategy = EQUAL_CHUNKING;
-    }
-    if (redistribution_strategy == LOAD_BALANCED) {
-      int i = 0;
-      for (auto &index : vec) {
-        int start = std::get<0>(index);
-        int end = std::get<1>(index);
-        std::vector<int> chunk(parent_vec.begin() + start,
-                               parent_vec.begin() + end);
-        int size = end - start;
-        MPI_Send(&size, 1, MPI_INT, i + 1, VEC_SIZE, MPI_COMM_WORLD);
-        MPI_Send(chunk.data(), size, MPI_INT, i + 1, VEC_DATA, MPI_COMM_WORLD);
-
-        i++;
-      }
-    }
-  }
-  if (redistribution_strategy == EQUAL_CHUNKING) {
-    int chunk_size = parent_vec.size() / children_num;
-    for (int i = 0; i < children_num - 1; i++) {
-      std::vector<int> chunk((parent_vec.begin() + (i * chunk_size)),
-                             parent_vec.begin() + ((i + 1) * chunk_size));
-      MPI_Send(&chunk_size, 1, MPI_INT, i + 1, VEC_SIZE, MPI_COMM_WORLD);
-      MPI_Send(chunk.data(), chunk.size(), MPI_INT, i + 1, VEC_DATA,
-               MPI_COMM_WORLD);
-#if DEBUG == 1
-      printf("parent sending to %d\n", i + 1);
-      debug_vector(chunk);
-#endif
-    }
-    // send out last non even chunk
-    int last_index = children_num - 1;
-    std::vector<int> chunk((parent_vec.begin() + (last_index * chunk_size)),
-                           parent_vec.end());
-    size_t final_chunk_size = chunk.size();
-    MPI_Send(&final_chunk_size, 1, MPI_INT, last_index + 1, VEC_SIZE,
-             MPI_COMM_WORLD);
-    MPI_Send(chunk.data(), chunk.size(), MPI_INT, last_index + 1, VEC_DATA,
-             MPI_COMM_WORLD);
-  }
-}
-
-std::vector<int> combine_work(int children_num) {
-  std::vector<int> sumVec;
-  for (int childRank = 1; childRank < children_num + 1; childRank++) {
-    int chunkSize;
-    MPI_Recv(&chunkSize, 1, MPI_INT, childRank, VEC_SIZE, MPI_COMM_WORLD,
-             MPI_STATUS_IGNORE);
-    std::vector<int> chunkVec(chunkSize);
-    MPI_Recv(chunkVec.data(), chunkSize, MPI_INT, childRank, VEC_DATA,
-             MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-    sumVec.insert(sumVec.end(), chunkVec.begin(), chunkVec.end());
-#if DEBUG == 1
-    std::cout << "parent receiving from " << childRank << std::endl;
-    debug_vector(chunkVec);
-#endif
-  }
-  return sumVec;
-}
-
-std::vector<int> combineAndSendOutFn(const int children_num) {
-  auto combined = combine_work(children_num);
-#if DEBUG == 1
-  debug_vector(combined);
-#endif
-  // flush(combined);
-  send_out_work(children_num, combined, LOAD_BALANCED);
-  return combined;
-}
-
-void children_code(
-    std::vector<std::function<std::vector<int>(const std::vector<int> &, int)>>
-        filter_list,
-    int rank) {
-  int vec_size;
-  MPI_Recv(&vec_size, 1, MPI_INT, RANK_0, VEC_SIZE, MPI_COMM_WORLD,
-           MPI_STATUS_IGNORE);
-  std::vector<int> original_vector(vec_size);
-  MPI_Recv(original_vector.data(), vec_size, MPI_INT, RANK_0, VEC_DATA,
-           MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-#if DEBUG == 1
-  printf("filter list has %lu\n", filter_list.size());
-#endif
-  for (const auto &filterFun : filter_list) {
-    original_vector = filterFun(original_vector, rank);
-#if DEBUG == 1
-    std::cout << "filter happening " << std::endl;
-    debug_vector(original_vector);
-#endif
-  }
-
-  MPI_Send(&vec_size, 1, MPI_INT, RANK_0, VEC_SIZE, MPI_COMM_WORLD);
-  MPI_Send(original_vector.data(), original_vector.size(), MPI_INT, RANK_0,
-           VEC_DATA, MPI_COMM_WORLD);
-#if DEBUG == 1
-  std::cout << "child sending back " << std::endl;
-  debug_vector(original_vector);
-#endif
-}
 
 int main(int argc, char **argv) {
   MPI_Init(&argc, &argv);
@@ -262,7 +27,7 @@ int main(int argc, char **argv) {
     MPI_Abort(MPI_COMM_WORLD, 1);
   }
   if (rank == 0) {
-    const int PARENT_VEC_SIZE = 800;
+    const int PARENT_VEC_SIZE = 200;
     std::vector<int> parent_vec(PARENT_VEC_SIZE);
     for (int i = 0; i < PARENT_VEC_SIZE; i++) {
       parent_vec[i] = i;
@@ -272,18 +37,18 @@ int main(int argc, char **argv) {
                 << " processes.\n ";
       MPI_Abort(MPI_COMM_WORLD, 1);
     }
-    send_out_work(CHUNKS, parent_vec, EQUAL_CHUNKING);
+    send_out_work(CHUNKS, parent_vec, load_balance::EQUAL_CHUNKING);
   }
 
   std::vector<std::function<std::vector<int>(const std::vector<int> &, int)>>
       filter_list;
-  filter_list.emplace_back(make_zeros);
-  filter_list.emplace_back(calculateSumVec);
-  filter_list.emplace_back(calculateSumVec);
-  filter_list.emplace_back(calculateSumVec);
-  filter_list.emplace_back(calculateSumVec);
+  filter_list.emplace_back(load_balance::make_zeros);
+  filter_list.emplace_back(load_balance::calculateSumVec);
+  filter_list.emplace_back(load_balance::calculateSumVec);
+  filter_list.emplace_back(load_balance::calculateSumVec);
+  filter_list.emplace_back(load_balance::calculateSumVec);
   std::vector<std::tuple<int, int>> filterOrder = {
-      {0, 5}}; // filter start up to but not including end
+      {0, 3}, {3, 5}}; // filter start up to but not including end
 
   if (filter_list.empty()) {
     std::cerr << "Filter list is empty\n";
@@ -301,11 +66,11 @@ int main(int argc, char **argv) {
       auto filterSlice = std::vector<
           std::function<std::vector<int>(const std::vector<int> &, int)>>(
           filter_list.begin() + start, filter_list.begin() + end);
-      children_code(filterSlice, rank);
+      load_balance::children_code(filterSlice, rank);
     } else {
-      auto vec = combineAndSendOutFn(CHUNKS);
+      auto vec = load_balance::combineAndSendOutFn(CHUNKS);
 #if DEBUG == 1
-      debug_vector(vec);
+      load_balance::debug_vector(vec);
 #endif
     }
     filter_count++;
@@ -320,11 +85,11 @@ int main(int argc, char **argv) {
     auto filterSlice = std::vector<
         std::function<std::vector<int>(const std::vector<int> &, int)>>(
         filter_list.begin() + start, filter_list.begin() + end);
-    children_code(filterSlice, rank);
+    load_balance::children_code(filterSlice, rank);
   } else {
-    auto final = combine_work(CHUNKS);
+    auto final = load_balance::combine_work(CHUNKS);
 #if SUPER_DEBUG == 1
-    debug_vector(final);
+    load_balance::debug_vector(final);
 #endif
   }
 

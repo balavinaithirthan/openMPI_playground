@@ -1,0 +1,17 @@
+#pragma once
+
+namespace load_balance {
+enum {
+  RANK_0 = 0,
+};
+
+enum {
+  VEC_SIZE = 0,
+  VEC_DATA = 1,
+};
+
+enum {
+  EQUAL_CHUNKING = 0,
+  LOAD_BALANCED = 1,
+};
+} // namespace load_balance
