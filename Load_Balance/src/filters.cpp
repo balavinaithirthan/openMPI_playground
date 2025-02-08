@@ -25,9 +25,9 @@ std::vector<int> calculateSumVec(const std::vector<int> &vec, int rank) {
     if (vec[i] == 0) {
       continue;
     }
-    for (int j = i + 1; j < 10000000; j++) {
-      vecCpy[i] = vec[i] + j;
-      vecCpy[i] = vec[i] - j;
+    for (int j = i + 1; j < 10; j++) {
+      vecCpy[i] =
+          vec[i] * j / (j | 1) + j % 3 - j % 7 + (j * j) - (j / 2) + (j & i);
     }
   }
   load_balance::debug_vector(vecCpy);

@@ -1,6 +1,6 @@
 #pragma once
+#include "enums.hpp"
 #include <vector>
-
 namespace load_balance {
 void debug_vector(const std::vector<int> &vec);
 

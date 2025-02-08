@@ -6,10 +6,6 @@
 #include <mpi.h>
 #include <vector>
 
-// #define DEBUG 1
-#define SUPER_DEBUG 1
-#define TIMING 1
-
 int main(int argc, char **argv) {
   MPI_Init(&argc, &argv);
 
@@ -27,7 +23,7 @@ int main(int argc, char **argv) {
     MPI_Abort(MPI_COMM_WORLD, 1);
   }
   if (rank == 0) {
-    const int PARENT_VEC_SIZE = 200;
+    const int PARENT_VEC_SIZE = 20;
     std::vector<int> parent_vec(PARENT_VEC_SIZE);
     for (int i = 0; i < PARENT_VEC_SIZE; i++) {
       parent_vec[i] = i;
@@ -45,10 +41,10 @@ int main(int argc, char **argv) {
   filter_list.emplace_back(load_balance::make_zeros);
   filter_list.emplace_back(load_balance::calculateSumVec);
   filter_list.emplace_back(load_balance::calculateSumVec);
-  filter_list.emplace_back(load_balance::calculateSumVec);
-  filter_list.emplace_back(load_balance::calculateSumVec);
+  // filter_list.emplace_back(load_balance::calculateSumVec);
+  // filter_list.emplace_back(load_balance::calculateSumVec);
   std::vector<std::tuple<int, int>> filterOrder = {
-      {0, 3}, {3, 5}}; // filter start up to but not including end
+      {0, 3}}; // filter start up to but not including end
 
   if (filter_list.empty()) {
     std::cerr << "Filter list is empty\n";

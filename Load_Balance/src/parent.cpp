@@ -1,16 +1,14 @@
 #include "parent.hpp"
 namespace load_balance {
-void flush(std::vector<int> vec) {
-  std::vector<int> newVec = std::vector<int>{};
-  for (int i = 0; i < vec.size(); i++) {
-    if (vec[i] == 0) {
-      continue;
-    } else {
-      newVec.emplace_back(vec[i]);
-    }
-  }
-}
+std::vector<int> flush(const std::vector<int> &vec) {
+  std::vector<int> newVec;
+  newVec.reserve(vec.size()); // Optimize by reserving max possible size
 
+  std::copy_if(vec.begin(), vec.end(), std::back_inserter(newVec),
+               [](int x) { return x != 0; });
+
+  return newVec;
+}
 // std::vector<int> redistribute(std::vector<int> vec, int
 // redistribution_strategy,
 //                               int rank) {
@@ -90,8 +88,8 @@ std::vector<int> combineAndSendOutFn(const int children_num) {
 #if DEBUG == 1
   load_balance::debug_vector(combined);
 #endif
-  // flush(combined);
-  send_out_work(children_num, combined, LOAD_BALANCED);
+  combined = flush(combined);
+  send_out_work(children_num, combined, EQUAL_CHUNKING);
   return combined;
 }
 } // namespace load_balance

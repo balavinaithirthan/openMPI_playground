@@ -1,4 +1,3 @@
-#pragma once
 #include "children.hpp"
 
 namespace load_balance {
