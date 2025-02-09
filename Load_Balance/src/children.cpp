@@ -1,4 +1,5 @@
 #include "children.hpp"
+#include "debug.hpp"
 
 namespace load_balance {
 
@@ -15,15 +16,15 @@ void children_code(
 #if DEBUG == 1
   printf("filter list has %lu\n", filter_list.size());
 #endif
+  assert(filter_list.size() > 0);
   for (const auto &filterFun : filter_list) {
     original_vector = filterFun(original_vector, rank);
-#if DEBUG == 1
-    std::cout << "filter happening " << std::endl;
-    load_balance::debug_vector(original_vector);
-#endif
+    assert(original_vector.size() == vec_size);
   }
+  debug_vector(original_vector);
+  int new_vec_size = original_vector.size();
 
-  MPI_Send(&vec_size, 1, MPI_INT, RANK_0, VEC_SIZE, MPI_COMM_WORLD);
+  MPI_Send(&new_vec_size, 1, MPI_INT, RANK_0, VEC_SIZE, MPI_COMM_WORLD);
   MPI_Send(original_vector.data(), original_vector.size(), MPI_INT, RANK_0,
            VEC_DATA, MPI_COMM_WORLD);
 #if DEBUG == 1

@@ -1,7 +1,7 @@
 #pragma once
 #include "debug.hpp"
+#include "enums.hpp"
 #include <vector>
-
 namespace load_balance {
 std::vector<int> make_zeros(const std::vector<int> &vec, int rank);
 

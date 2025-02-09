@@ -1,4 +1,5 @@
 #include "parent.hpp"
+#include <iostream>
 namespace load_balance {
 std::vector<int> flush(const std::vector<int> &vec) {
   std::vector<int> newVec;
@@ -18,30 +19,8 @@ std::vector<int> flush(const std::vector<int> &vec) {
 
 void send_out_work(int children_num, std::vector<int> parent_vec,
                    int redistribution_strategy) {
-  if (redistribution_strategy == LOAD_BALANCED) { // auto flush
-    std::vector<std::tuple<int, int>> vec =
-        load_balanced_indices(parent_vec, children_num);
-    load_balance::debug_indices(vec);
-    if (vec.empty()) {
-      redistribution_strategy = EQUAL_CHUNKING;
-    }
-    if (redistribution_strategy == LOAD_BALANCED) {
-      int i = 0;
-      for (auto &index : vec) {
-        int start = std::get<0>(index);
-        int end = std::get<1>(index);
-        std::vector<int> chunk(parent_vec.begin() + start,
-                               parent_vec.begin() + end);
-        int size = end - start;
-        MPI_Send(&size, 1, MPI_INT, i + 1, VEC_SIZE, MPI_COMM_WORLD);
-        MPI_Send(chunk.data(), size, MPI_INT, i + 1, VEC_DATA, MPI_COMM_WORLD);
-
-        i++;
-      }
-    }
-  }
-  if (redistribution_strategy == EQUAL_CHUNKING) {
     int chunk_size = parent_vec.size() / children_num;
+    assert(chunk_size != 0);
     for (int i = 0; i < children_num - 1; i++) {
       std::vector<int> chunk((parent_vec.begin() + (i * chunk_size)),
                              parent_vec.begin() + ((i + 1) * chunk_size));
@@ -62,7 +41,6 @@ void send_out_work(int children_num, std::vector<int> parent_vec,
              MPI_COMM_WORLD);
     MPI_Send(chunk.data(), chunk.size(), MPI_INT, last_index + 1, VEC_DATA,
              MPI_COMM_WORLD);
-  }
 }
 
 std::vector<int> combine_work(int children_num) {
@@ -74,7 +52,7 @@ std::vector<int> combine_work(int children_num) {
     std::vector<int> chunkVec(chunkSize);
     MPI_Recv(chunkVec.data(), chunkSize, MPI_INT, childRank, VEC_DATA,
              MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-    sumVec.insert(sumVec.end(), chunkVec.begin(), chunkVec.end());
+    sumVec.insert(sumVec.end(), chunkVec.begin(), chunkVec.end()); // insert into the end of sumVec
 #if DEBUG == 1
     std::cout << "parent receiving from " << childRank << std::endl;
     load_balance::debug_vector(chunkVec);
@@ -84,11 +62,11 @@ std::vector<int> combine_work(int children_num) {
 }
 
 std::vector<int> combineAndSendOutFn(const int children_num) {
-  auto combined = combine_work(children_num);
+  std::vector<int> combined = combine_work(children_num);
 #if DEBUG == 1
   load_balance::debug_vector(combined);
 #endif
-  combined = flush(combined);
+  // combined = flush(combined);
   send_out_work(children_num, combined, EQUAL_CHUNKING);
   return combined;
 }

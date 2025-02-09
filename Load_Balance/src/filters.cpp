@@ -16,6 +16,7 @@ std::vector<int> make_zeros(const std::vector<int> &vec, int rank) {
   return newVec;
 }
 
+// can make as in place filter later
 std::vector<int> calculateSumVec(const std::vector<int> &vec, int rank) {
 #if DEBUG == 1
   printf("calculating sum \n");
@@ -30,7 +31,8 @@ std::vector<int> calculateSumVec(const std::vector<int> &vec, int rank) {
           vec[i] * j / (j | 1) + j % 3 - j % 7 + (j * j) - (j / 2) + (j & i);
     }
   }
-  load_balance::debug_vector(vecCpy);
+  assert(vecCpy.size() == vec.size());
+  debug_vector(vecCpy);
   return vecCpy;
 }
 } // namespace load_balance

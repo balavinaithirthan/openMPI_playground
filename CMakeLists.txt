@@ -10,7 +10,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 # Find the MPI package
 find_package(MPI REQUIRED)
 
-add_subdirectory(Load_Balance)
+add_subdirectory(load_balance)
 
 set(CMAKE_BUILD_TYPE Debug)
 

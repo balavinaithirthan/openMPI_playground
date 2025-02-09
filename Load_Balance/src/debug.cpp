@@ -21,4 +21,14 @@ void debug_indices(std::vector<std::tuple<int, int>> indices) {
   }
 }
 
+void print_vector(const std::vector<int> &vec) {
+  printf("[");
+  for (int i = 0; i < vec.size(); i++) {
+    printf("%d", vec[i]);
+    if (i != vec.size() - 1) {
+      printf(", ");
+    }
+  }
+  printf("]\n");
+}
 } // namespace load_balance

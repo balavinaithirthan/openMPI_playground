@@ -1,4 +1,5 @@
 #include "Load_Balance.hpp"
+#include "debug.hpp"
 #include <chrono>
 #include <cstdio>
 #include <functional>
@@ -41,19 +42,19 @@ int main(int argc, char **argv) {
   filter_list.emplace_back(load_balance::make_zeros);
   filter_list.emplace_back(load_balance::calculateSumVec);
   filter_list.emplace_back(load_balance::calculateSumVec);
-  // filter_list.emplace_back(load_balance::calculateSumVec);
-  // filter_list.emplace_back(load_balance::calculateSumVec);
+  filter_list.emplace_back(load_balance::calculateSumVec);
+  filter_list.emplace_back(load_balance::calculateSumVec);
   std::vector<std::tuple<int, int>> filterOrder = {
-      {0, 3}}; // filter start up to but not including end
+      {0, 2}, {2, 4}, {4, 5}}; // filter start up to but not including end, this is the actual Filter Number
 
   if (filter_list.empty()) {
     std::cerr << "Filter list is empty\n";
     MPI_Abort(MPI_COMM_WORLD, 1);
   }
 
-  int filter_count = 0;
+  int filter_count = 0; // This represents the current filter up (hasn't been)
   while (true) {
-    if (filter_count == filter_list.size() - 1) {
+    if (filter_count == filterOrder.size() - 1) {
       break;
     }
     if (rank != 0) {
@@ -81,9 +82,11 @@ int main(int argc, char **argv) {
     auto filterSlice = std::vector<
         std::function<std::vector<int>(const std::vector<int> &, int)>>(
         filter_list.begin() + start, filter_list.begin() + end);
+    assert(filterSlice.size() > 0);
     load_balance::children_code(filterSlice, rank);
   } else {
     auto final = load_balance::combine_work(CHUNKS);
+    load_balance::print_vector(final);
 #if SUPER_DEBUG == 1
     load_balance::debug_vector(final);
 #endif
@@ -102,3 +105,4 @@ int main(int argc, char **argv) {
 }
 
 // mpirun -np 5 ./hello_mpi
+// mpirun -np 4 xterm -e gdb -ex run --args ./MyMPIProject
