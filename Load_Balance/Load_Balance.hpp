@@ -4,3 +4,4 @@
 #include "include/filters.hpp"
 #include "include/load_balance_indices.hpp"
 #include "include/parent.hpp"
+#include "include/mpi_kernel.hpp"

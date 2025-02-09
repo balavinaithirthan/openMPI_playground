@@ -12,6 +12,7 @@ set(SourceFiles
     src/children.cpp
     src/parent.cpp
     src/filters.cpp
+    src/mpi_kernel.cpp
     )
 
 add_library(${PROJECT_NAME} SHARED ${SourceFiles})

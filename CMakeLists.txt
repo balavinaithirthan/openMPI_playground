@@ -15,7 +15,8 @@ add_subdirectory(load_balance)
 set(CMAKE_BUILD_TYPE Debug)
 
 
-add_executable(${PROJECT_NAME} main.cpp)
+add_executable(${PROJECT_NAME} main.cpp performance_testing.cpp)
+
 
 target_link_libraries(${PROJECT_NAME} PUBLIC MPI::MPI_CXX)
 target_include_directories(${PROJECT_NAME} PRIVATE load_balance)
