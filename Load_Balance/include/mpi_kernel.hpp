@@ -10,6 +10,6 @@
 #include "children.hpp"
 
 namespace load_balance {
-    void MPI_kernel(int number_of_procs, int rank, int filter_number, std::function<std::vector<int>(const std::vector<int> &, int)>
-      filterFunction, int number_of_filters, int problem_size, std::vector<std::tuple<int, int>> filter_order);
-}
+std::vector<int> MPI_kernel(const int number_of_procs, const int rank, const std::function<std::vector<int>(const std::vector<int> &, int)>
+      filterFunction, const int number_of_filters, const int problem_size, const std::vector<std::tuple<int, int>> filter_order);
+      } // namespace load_balance

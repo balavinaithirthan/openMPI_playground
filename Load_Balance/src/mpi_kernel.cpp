@@ -1,8 +1,9 @@
 #include "mpi_kernel.hpp"
+#include "debug.hpp"
 
 namespace load_balance {
-void MPI_kernel(int number_of_procs, int rank, int filter_number, std::function<std::vector<int>(const std::vector<int> &, int)>
-      filterFunction, int number_of_filters, int problem_size, std::vector<std::tuple<int, int>> filter_order) {
+std::vector<int> MPI_kernel(const int number_of_procs, const int rank, const std::function<std::vector<int>(const std::vector<int> &, int)>
+      filterFunction, const int number_of_filters, const int problem_size, const std::vector<std::tuple<int, int>> filter_order) {
   const int CHUNKS = number_of_procs - 1;
   if (number_of_procs < CHUNKS + 1) {
     std::cerr << "This program requires at least " << CHUNKS + 1
@@ -33,7 +34,7 @@ void MPI_kernel(int number_of_procs, int rank, int filter_number, std::function<
     MPI_Abort(MPI_COMM_WORLD, 1);
   }
 
-  int filter_count = 0; // This represents the current filter up (hasn't been)
+  int filter_count = 0; // This represents the current filter up (hasn't been run yet)
   while (true) {
     if (filter_count == filter_order.size() - 1) {
       break;
@@ -56,7 +57,7 @@ void MPI_kernel(int number_of_procs, int rank, int filter_number, std::function<
     printf("filter count %d\n", filter_count);
 #endif
   }
-
+  std::vector<int> final;
   if (rank != 0) {
     int start = std::get<0>(filter_order[filter_count]);
     int end = std::get<1>(filter_order[filter_count]);
