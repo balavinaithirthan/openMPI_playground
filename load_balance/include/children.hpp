@@ -4,6 +4,7 @@
 #include "mpi.h"
 #include <iostream>
 #include <vector>
+#include <cassert>
 namespace load_balance {
 void children_code(
     std::vector<std::function<std::vector<int>(const std::vector<int> &, int)>>

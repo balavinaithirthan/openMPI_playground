@@ -5,6 +5,7 @@
 #include <mpi.h>
 #include <tuple>
 #include <vector>
+#include <cassert>
 namespace load_balance {
 std::vector<int> flush(const std::vector<int> &vec);
 
