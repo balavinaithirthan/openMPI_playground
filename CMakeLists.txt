@@ -12,7 +12,7 @@ find_package(MPI REQUIRED)
 
 add_subdirectory(load_balance)
 
-set(CMAKE_BUILD_TYPE Debug)
+set(CMAKE_BUILD_TYPE Release)
 
 
 add_executable(${PROJECT_NAME} main.cpp performance_testing.cpp)

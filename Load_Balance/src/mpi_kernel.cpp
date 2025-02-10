@@ -1,8 +1,7 @@
 #include "mpi_kernel.hpp"
-#include "debug.hpp"
 
 namespace load_balance {
-std::vector<int> MPI_kernel(const int number_of_procs, const int rank, const std::function<std::vector<int>(const std::vector<int> &, int)>
+void MPI_kernel(const int number_of_procs, const int rank, const std::function<std::vector<int>(const std::vector<int> &, int)>
       filterFunction, const int number_of_filters, const int problem_size, const std::vector<std::tuple<int, int>> filter_order) {
   const int CHUNKS = number_of_procs - 1;
   if (number_of_procs < CHUNKS + 1) {
@@ -10,6 +9,8 @@ std::vector<int> MPI_kernel(const int number_of_procs, const int rank, const std
               << " processes.\n ";
     MPI_Abort(MPI_COMM_WORLD, 1);
   }
+  auto start = time_start();
+
   if (rank == 0) {
     std::vector<int> parent_vec(problem_size);
     for (int i = 0; i < problem_size; i++) {
@@ -20,6 +21,7 @@ std::vector<int> MPI_kernel(const int number_of_procs, const int rank, const std
                 << " processes.\n ";
       MPI_Abort(MPI_COMM_WORLD, 1);
     }
+    start = time_start();
     send_out_work(CHUNKS, parent_vec, EQUAL_CHUNKING);
   }
 
@@ -68,7 +70,8 @@ std::vector<int> MPI_kernel(const int number_of_procs, const int rank, const std
     children_code(filterSlice, rank);
   } else {
     auto final = combine_work(CHUNKS);
-    print_vector(final);
+    time_end(start, rank);
+    // print_vector(final);
 #if SUPER_DEBUG == 1
     load_balance::debug_vector(final);
 #endif
