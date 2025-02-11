@@ -33,7 +33,7 @@ void print_vector(const std::vector<int> &vec) {
 }
 
 void print_filter_list(
-    std::vector<std::function<std::vector<int>(const std::vector<int> &, int)>>
+    std::vector<std::function<void(std::vector<int> &, int)>>
         filter_list) {
   for (int i = 0; i < filter_list.size(); i++) {
     printf("filter %d\n", i);

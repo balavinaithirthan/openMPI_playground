@@ -1,7 +1,7 @@
 #include "mpi_kernel.hpp"
 
 namespace load_balance {
-void MPI_kernel(const int number_of_procs, const int rank, const std::function<std::vector<int>(const std::vector<int> &, int)>
+void MPI_kernel(const int number_of_procs, const int rank, const std::function<void(std::vector<int> &, int)>
       filterFunction, const int number_of_filters, const int problem_size, const std::vector<std::tuple<int, int>> filter_order) {
   const int CHUNKS = number_of_procs - 1;
   if (number_of_procs < CHUNKS + 1) {
@@ -25,10 +25,10 @@ void MPI_kernel(const int number_of_procs, const int rank, const std::function<s
     send_out_work(CHUNKS, parent_vec, EQUAL_CHUNKING);
   }
 
-  std::vector<std::function<std::vector<int>(const std::vector<int> &, int)>>
-      filter_list;
+  std::vector<std::function<void(std::vector<int> &, int)>>
+      filter_list(number_of_filters);
   for (int i = 0; i < number_of_filters; i++) {
-    filter_list.push_back(filterFunction);
+    filter_list.emplace_back(filterFunction);
   }
 
   if (filter_list.empty()) {
@@ -45,7 +45,7 @@ void MPI_kernel(const int number_of_procs, const int rank, const std::function<s
       int start = std::get<0>(filter_order[filter_count]);
       int end = std::get<1>(filter_order[filter_count]);
       auto filterSlice = std::vector<
-          std::function<std::vector<int>(const std::vector<int> &, int)>>(
+          std::function<void(std::vector<int> &, int)>>(
           filter_list.begin() + start, filter_list.begin() + end);
       children_code(filterSlice, rank);
     } else {
@@ -64,7 +64,7 @@ void MPI_kernel(const int number_of_procs, const int rank, const std::function<s
     int start = std::get<0>(filter_order[filter_count]);
     int end = std::get<1>(filter_order[filter_count]);
     auto filterSlice = std::vector<
-        std::function<std::vector<int>(const std::vector<int> &, int)>>(
+        std::function<void(std::vector<int> &, int)>>(
         filter_list.begin() + start, filter_list.begin() + end);
     assert(filterSlice.size() > 0);
     children_code(filterSlice, rank);

@@ -11,6 +11,6 @@
 #include "timing.hpp"
 #include "debug.hpp"
 namespace load_balance {
-void MPI_kernel(const int number_of_procs, const int rank, const std::function<std::vector<int>(const std::vector<int> &, int)>
-      filterFunction, const int number_of_filters, const int problem_size, const std::vector<std::tuple<int, int>> filter_order);
+void MPI_kernel(const int number_of_procs, const int rank, const std::function<void(std::vector<int> &, int)> filterFunction,
+       const int number_of_filters, const int problem_size, const std::vector<std::tuple<int, int>> filter_order);
       } // namespace load_balance
