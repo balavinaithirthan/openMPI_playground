@@ -1,4 +1,5 @@
 #include "filters.hpp"
+#include <array>
 
 namespace load_balance {
 std::vector<int> make_zeros(const std::vector<int> &vec, int rank) {
@@ -35,42 +36,44 @@ void calculateSumVec(std::vector<int> &vec, int rank) {
   return;
 }
 
-int stencil_step(const std::vector<std::vector<double>>& input,
-                  std::vector<std::vector<double>>& output,
-                  double alpha) {
-    int rows = input.size();
-    int cols = input[0].size();
+constexpr int N = 4;  // Must be known at compile time
 
-    for (int i = 1; i < rows - 1; ++i) {
-        for (int j = 1; j < cols - 1; ++j) {
-            output[i][j] = input[i][j] +
-                           alpha * (input[i - 1][j] + input[i + 1][j] +
-                                    input[i][j - 1] + input[i][j + 1] -
-                                    4 * input[i][j]);
+constexpr auto make_matrix() {
+    std::array<std::array<int, N>, N> arr = {};
+    for (int i = 0; i < N; ++i) {
+        for (int j = 0; j < N; ++j) {
+            arr[i][j] = 6.0f;  // Can be constexpr!
         }
     }
-    return (int)output[rows - 2][cols - 2];
+    return arr;
 }
 
-std::vector<int> memoryBoundFilter(const std::vector<int> &vec, int rank) {
-  std::vector<int> vecCpy(vec.size(), 0);
+constexpr auto A = make_matrix(); // Computed at compile time
+constexpr auto B = make_matrix();
+
+  
+int Transpose(std::array<std::array<int, N>, N> A, std::array<std::array<int, N>, N> B, int i)
+{
+    for(int i = 0; i < N; i++)
+    {
+        for(int j = 0; j < N; j++)
+        {
+            A[i][j] = B[j][i] + i;
+        }
+    }
+    return A[3][3];
+}
+
+void memoryBoundFilter(std::vector<int> &vec, int rank) {
+  int initial_size = vec.size();
   for (int i = 0; i < vec.size(); i++) {
     if (vec[i] == 0) {
       continue;
     }
-    int rows = 1000;
-    int cols = 1000;
-    double alpha = 0.1;
-    std::vector<std::vector<double>> grid(rows, std::vector<double>(cols, 0.0));
-    std::vector<std::vector<double>> new_grid = grid;
-    grid[5][5] = 100.0;
-       
-    vecCpy[i] = stencil_step(grid, new_grid, alpha);
+    vec[i] = Transpose(A, B, i);
     
   }
-  assert(vecCpy.size() == vec.size());
-  debug_vector(vecCpy);
-  return vecCpy;
+  assert(vec.size() == initial_size);
 }
 
 } // namespace load_balance

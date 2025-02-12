@@ -18,7 +18,17 @@ void children_code(
 #endif
   assert(filter_list.size() > 0);
   for (const auto &filterFun : filter_list) {
-    filterFun(original_vector, rank);
+    // if (!filterFun) {
+    //   std::cerr << "Error: encountered an uninitialized function in filter_list" << std::endl;
+    //   continue;
+    // }
+    // try {
+    //   filterFun(original_vector, rank);
+    // } catch (const std::bad_function_call &e) {
+    //   std::cerr << "Error: bad function call - " << e.what() << std::endl;
+    //   continue;
+    // }
+    // printf("fopefjiowefjoiwefjowiefjweoifjwfjwefjweoo\n");
     assert(original_vector.size() == vec_size);
   }
   debug_vector(original_vector);

@@ -1,4 +1,5 @@
 #include "mpi_kernel.hpp"
+#include "debug.hpp"
 
 namespace load_balance {
 void MPI_kernel(const int number_of_procs, const int rank, const std::function<void(std::vector<int> &, int)>
@@ -28,9 +29,9 @@ void MPI_kernel(const int number_of_procs, const int rank, const std::function<v
   std::vector<std::function<void(std::vector<int> &, int)>>
       filter_list(number_of_filters);
   for (int i = 0; i < number_of_filters; i++) {
-    filter_list.emplace_back(filterFunction);
+    filter_list[i] = filterFunction;
   }
-
+  print_filter_list(filter_list);
   if (filter_list.empty()) {
     std::cerr << "Filter list is empty\n";
     MPI_Abort(MPI_COMM_WORLD, 1);
