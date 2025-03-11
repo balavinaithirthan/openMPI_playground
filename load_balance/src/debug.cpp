@@ -1,8 +1,9 @@
 #include "debug.hpp"
+#include "hit.hpp"
 #include <mpi.h>
 
 namespace load_balance {
-void debug_vector(const std::vector<int> &vec) {
+void debug_vector(const std::vector<filters::Hit> &vec) {
 #if SUPER_DEBUG == 1
   printf("[");
   for (int i = 0; i < vec.size(); i++) {
@@ -22,10 +23,10 @@ void debug_indices(std::vector<std::tuple<int, int>> indices) {
   }
 }
 
-void print_vector(const std::vector<int> &vec) {
+void print_vector(const std::vector<filters::Hit> &vec) {
   printf("[");
   for (int i = 0; i < vec.size(); i++) {
-    printf("%d", vec[i]);
+    printf("%d", vec[i].on);
     if (i != vec.size() - 1) {
       printf(", ");
     }
@@ -34,7 +35,8 @@ void print_vector(const std::vector<int> &vec) {
 }
 
 void print_filter_list(
-    std::vector<std::function<void(std::vector<int> &, int)>> filter_list) {
+    std::vector<std::function<void(std::vector<filters::Hit> &, int)>>
+        filter_list) {
   for (int i = 0; i < filter_list.size(); i++) {
     if (!filter_list[i]) {
       std::cerr
@@ -43,7 +45,8 @@ void print_filter_list(
       continue;
     }
     printf("filter %d\n", i);
-    auto vec = std::vector<int>{1, 2, 3, 4, 5};
+    auto vec = std::vector<filters::Hit>{filters::Hit(), filters::Hit(),
+                                         filters::Hit()};
     filter_list[i](vec, 0);
   }
 }

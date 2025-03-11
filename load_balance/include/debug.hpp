@@ -1,15 +1,18 @@
 #pragma once
 #include "enums.hpp"
+#include "hit.hpp"
 #include <functional>
 #include <iostream>
 #include <tuple>
 #include <vector>
+
 namespace load_balance {
-void debug_vector(const std::vector<int> &vec);
-void print_vector(const std::vector<int> &vec);
+void debug_vector(const std::vector<filters::Hit> &vec);
+void print_vector(const std::vector<filters::Hit> &vec);
 void debug_indices(std::vector<std::tuple<int, int>> indices);
 void print_filter_list(
-    std::vector<std::function<void(std::vector<int> &, int)>> filter_list);
+    std::vector<std::function<void(std::vector<filters::Hit> &, int)>>
+        filter_list);
 
 inline void print_filter_order(std::vector<std::tuple<int, int>> filter_order) {
   for (const auto &filter : filter_order) {

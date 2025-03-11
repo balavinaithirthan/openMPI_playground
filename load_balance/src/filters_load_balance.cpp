@@ -1,4 +1,5 @@
 #include "filters_load_balance.hpp"
+#include "hit.hpp"
 #include <array>
 
 namespace load_balance {
@@ -32,7 +33,6 @@ void calculateSumVec(std::vector<int> &vec, int rank) {
     }
   }
   assert(vec.size() == original_size);
-  debug_vector(vec);
   return;
 }
 

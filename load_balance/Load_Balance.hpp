@@ -2,6 +2,7 @@
 #include "include/debug.hpp"
 #include "include/enums.hpp"
 #include "include/filters_load_balance.hpp"
+#include "include/gapped.hpp"
 #include "include/load_balance_indices.hpp"
 #include "include/mpi_kernel.hpp"
 #include "include/parent.hpp"

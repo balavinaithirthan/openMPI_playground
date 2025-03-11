@@ -1,14 +1,15 @@
 #include "mpi_kernel.hpp"
-#include "hit.hpp"
+#include "debug.hpp"
 namespace load_balance {
 void MPI_kernel(
     const int number_of_procs, const int rank, const int problem_size,
-    std::vector<std::function<void(std::vector<int> &, int)>> filter_list,
-    const std::vector<std::tuple<int, int>> filter_order) {
+    std::vector<std::function<void(std::vector<filters::Hit> &, int)>>
+        filter_list,
+    const std::vector<std::tuple<int, int>> filter_order,
+    std::vector<filters::Hit> &parent_vec) {
 
   // print_filter_list(filter_list);
   // print_filter_order(filter_order);
-
   const int CHUNKS = number_of_procs - 1;
   if (number_of_procs < CHUNKS + 1) {
     std::cerr << "This program requires at least " << CHUNKS + 1
@@ -18,10 +19,6 @@ void MPI_kernel(
   auto start = time_start();
 
   if (rank == 0) {
-    std::vector<int> parent_vec(problem_size);
-    for (int i = 0; i < problem_size; i++) {
-      parent_vec[i] = i;
-    }
     if (problem_size < number_of_procs) {
       std::cerr << "This program requires at least " << problem_size
                 << " processes.\n ";
@@ -45,8 +42,9 @@ void MPI_kernel(
       int start = std::get<0>(filter_order[filter_count]);
       int end = std::get<1>(filter_order[filter_count]);
       auto filterSlice =
-          std::vector<std::function<void(std::vector<int> &, int)>>(
+          std::vector<std::function<void(std::vector<filters::Hit> &, int)>>(
               filter_list.begin() + start, filter_list.begin() + end);
+      assert(filterSlice.size() > 0);
       children_code(filterSlice, rank);
     } else {
       auto vec = combineAndSendOutFn(CHUNKS);
@@ -59,19 +57,19 @@ void MPI_kernel(
     printf("filter count %d\n", filter_count);
 #endif
   }
-  std::vector<int> final;
+  std::vector<filters::Hit> final;
   if (rank != 0) {
     int start = std::get<0>(filter_order[filter_count]);
     int end = std::get<1>(filter_order[filter_count]);
     auto filterSlice =
-        std::vector<std::function<void(std::vector<int> &, int)>>(
+        std::vector<std::function<void(std::vector<filters::Hit> &, int)>>(
             filter_list.begin() + start, filter_list.begin() + end);
     assert(filterSlice.size() > 0);
     children_code(filterSlice, rank);
   } else {
     auto final = combine_work(CHUNKS);
     time_end(start, rank);
-    // print_vector(final);
+    print_vector(final);
 #if SUPER_DEBUG == 1
     load_balance::debug_vector(final);
 #endif

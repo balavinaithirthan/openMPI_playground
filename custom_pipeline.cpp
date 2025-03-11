@@ -2,16 +2,14 @@
 // --recoverseeds
 // --format=none --gfextend --ydrop=10
 #include "Load_Balance.hpp"
+#include "debug.hpp"
 #include "filters.hpp"
+#include "hit.hpp"
 #include <functional>
 #include <map>
 #include <mpi.h>
 #include <tuple>
 #include <vector>
-
-auto FILTER_ORDER = {std::make_tuple(0, 1)};
-std::vector<std::function<void(std::vector<int> &, int)>> FILTER_LIST = {
-    [](std::vector<int> &vec, int rank) { printf("filter 1\n"); }};
 
 /*
 Steps:
@@ -33,23 +31,41 @@ Steps:
 
 */
 
-int PROBLEM_SIZE = 30;
+int PROBLEM_SIZE = 20;
 int main(int argc, char **argv) {
-  std::string seq1 = std::string(PROBLEM_SIZE, 'A');
-  std::string seq2 = std::string(PROBLEM_SIZE, 'A');
-  int kmer_size = 10;
-  std::map<std::string, std::vector<size_t>> seedsOneMap =
-      filters::findSeeds(seq1, kmer_size);
-  std::map<std::string, std::vector<size_t>> seedsTwoMap =
-      filters::findSeeds(seq2, kmer_size);
-
-  auto hits = filters::findHits(seedsTwoMap, seedsTwoMap, kmer_size);
-  // filters::debug_hits(hits);
   MPI_Init(&argc, &argv);
   int rank, size;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size); // number of procs
-  load_balance::MPI_kernel(size, rank, PROBLEM_SIZE, FILTER_LIST, FILTER_ORDER);
+  /////////////////
+  /////////
+  ////////
+
+  // TODO: only the parent should do this in the future!
+  const std::string seq1 = std::string(PROBLEM_SIZE, 'A');
+  const std::string seq2 = std::string(PROBLEM_SIZE, 'A');
+  const int kmer_size = 10;
+  auto filter_order = {std::make_tuple(0, 1)};
+  std::vector<std::function<void(std::vector<filters::Hit> &, int)>>
+      filter_list = {[&](std::vector<filters::Hit> &vec, int rank) {
+        filters::gappedCompute(vec, seq1, seq2);
+      }};
+
+  std::map<std::string, std::vector<size_t>> seedsOneMap =
+      filters::findSeeds(seq1, kmer_size);
+  std::map<std::string, std::vector<size_t>> seedsTwoMap =
+      filters::findSeeds(seq2, kmer_size);
+  auto hits = filters::findHits(seedsTwoMap, seedsTwoMap, kmer_size);
+  if (rank == 0) {
+    load_balance::print_vector(hits);
+  }
+
+  ////////////////
+  ////////////////
+  ////////////////
+
+  load_balance::MPI_kernel(size, rank, PROBLEM_SIZE, filter_list, filter_order,
+                           hits);
   MPI_Finalize();
   return 0;
 }

@@ -14,13 +14,11 @@ std::vector<std::tuple<int, int>> load_balanced_indices(std::vector<int> vec,
   }
   if (non_zero_count < children_num) {
     printf("not enough values to take on children_num\n");
-    debug_vector(vec);
     MPI_Abort(MPI_COMM_WORLD, 1);
     return indices;
   }
   if (non_zero_count == 0) {
     printf("error non_zero_count == 0\n");
-    debug_vector(vec);
     MPI_Abort(MPI_COMM_WORLD, 1);
   }
   int chunk_size = non_zero_count / children_num;

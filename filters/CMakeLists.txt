@@ -9,9 +9,10 @@ set(SourceFiles
     src/helloworld.cpp
     src/seed.cpp
     src/findHits.cpp
+    src/gapped.cpp
     )
 
 add_library(${PROJECT_NAME} SHARED ${SourceFiles})
 
 target_include_directories(${PROJECT_NAME} PUBLIC include)
-
+target_include_directories(${PROJECT_NAME} PRIVATE ../hits_stuff)

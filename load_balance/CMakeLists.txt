@@ -19,6 +19,6 @@ set(SourceFiles
 add_library(${PROJECT_NAME} SHARED ${SourceFiles})
 
 target_include_directories(${PROJECT_NAME} PUBLIC include)
-target_include_directories(${PROJECT_NAME} PUBLIC ../filters/include) # TODO: pull out the Hit.hpp file and put it in a separate include directory
+target_include_directories(${PROJECT_NAME} PRIVATE ../hits_stuff) # TODO: pull out the Hit.hpp file and put it in a separate include directory
 target_link_libraries(${PROJECT_NAME} PUBLIC MPI::MPI_CXX)
 

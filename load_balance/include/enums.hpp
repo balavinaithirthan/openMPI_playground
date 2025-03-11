@@ -1,9 +1,9 @@
 #pragma once
 
-// #define DEBUG 1
+#define DEBUG 0
 // #define SUPER_DEBUG 1
-//#define TIMING 1
-//#define FINAL 1
+// #define TIMING 1
+// #define FINAL 1
 
 namespace load_balance {
 enum {
