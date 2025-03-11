@@ -8,5 +8,5 @@ std::vector<int> make_zeros( std::vector<int> &vec, int rank);
 
 void calculateSumVec( std::vector<int> &vec, int rank);
 
-std::vector<int> memoryBoundFilter(const std::vector<int> &vec, int rank);
+void memoryBoundFilter(std::vector<int> &vec, int rank);
 } // namespace load_balance

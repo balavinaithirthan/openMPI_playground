@@ -1,16 +1,17 @@
 #pragma once
-#include <vector>
-#include <tuple>
-#include <functional>
-#include <mpi.h>
-#include <iostream>
+#include "children.hpp"
 #include "debug.hpp"
 #include "enums.hpp"
 #include "parent.hpp"
-#include "children.hpp"
 #include "timing.hpp"
-#include "debug.hpp"
+#include <functional>
+#include <iostream>
+#include <mpi.h>
+#include <tuple>
+#include <vector>
 namespace load_balance {
-void MPI_kernel(const int number_of_procs, const int rank, const std::function<void(std::vector<int> &, int)> filterFunction,
-       const int number_of_filters, const int problem_size, const std::vector<std::tuple<int, int>> filter_order);
-      } // namespace load_balance
+void MPI_kernel(
+    const int number_of_procs, const int rank, const int problem_size,
+    std::vector<std::function<void(std::vector<int> &, int)>> filter_list,
+    const std::vector<std::tuple<int, int>> filter_order);
+} // namespace load_balance

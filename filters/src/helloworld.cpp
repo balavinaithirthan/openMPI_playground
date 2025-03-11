@@ -1,6 +1,5 @@
 #include "helloworld.hpp"
-#include <iostream>
 
-namespace load_balance {
+namespace filters {
 void hello() { std::cout << "Hello, World!" << std::endl; }
-} // namespace load_balance
+} // namespace filters

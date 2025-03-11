@@ -1,4 +1,4 @@
-#include "filters.hpp"
+#include "filters_load_balance.hpp"
 #include <array>
 
 namespace load_balance {
@@ -28,7 +28,7 @@ void calculateSumVec(std::vector<int> &vec, int rank) {
       continue;
     }
     for (int j = 0; j < 300000; j++) {
-      vec[i] += vec[i] * j * 2 * j + (j/3);
+      vec[i] += vec[i] * j * 2 * j + (j / 3);
     }
   }
   assert(vec.size() == original_size);
@@ -36,32 +36,29 @@ void calculateSumVec(std::vector<int> &vec, int rank) {
   return;
 }
 
-constexpr int N = 4;  // Must be known at compile time
+constexpr int N = 4; // Must be known at compile time
 
 constexpr auto make_matrix() {
-    std::array<std::array<int, N>, N> arr = {};
-    for (int i = 0; i < N; ++i) {
-        for (int j = 0; j < N; ++j) {
-            arr[i][j] = 6.0f;  // Can be constexpr!
-        }
+  std::array<std::array<int, N>, N> arr = {};
+  for (int i = 0; i < N; ++i) {
+    for (int j = 0; j < N; ++j) {
+      arr[i][j] = 6.0f; // Can be constexpr!
     }
-    return arr;
+  }
+  return arr;
 }
 
 constexpr auto A = make_matrix(); // Computed at compile time
 constexpr auto B = make_matrix();
 
-  
-int Transpose(std::array<std::array<int, N>, N> A, std::array<std::array<int, N>, N> B, int i)
-{
-    for(int i = 0; i < N; i++)
-    {
-        for(int j = 0; j < N; j++)
-        {
-            A[i][j] = B[j][i] + i;
-        }
+int Transpose(std::array<std::array<int, N>, N> A,
+              std::array<std::array<int, N>, N> B, int i) {
+  for (int i = 0; i < N; i++) {
+    for (int j = 0; j < N; j++) {
+      A[i][j] = B[j][i] + i;
     }
-    return A[3][3];
+  }
+  return A[3][3];
 }
 
 void memoryBoundFilter(std::vector<int> &vec, int rank) {
@@ -71,7 +68,6 @@ void memoryBoundFilter(std::vector<int> &vec, int rank) {
       continue;
     }
     vec[i] = Transpose(A, B, i);
-    
   }
   assert(vec.size() == initial_size);
 }

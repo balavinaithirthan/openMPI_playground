@@ -11,13 +11,16 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 find_package(MPI REQUIRED)
 
 add_subdirectory(load_balance)
+add_subdirectory(filters)
 
 set(CMAKE_BUILD_TYPE Release)
 
 
-add_executable(${PROJECT_NAME} main.cpp performance_testing.cpp)
+add_executable(${PROJECT_NAME} custom_pipeline.cpp)
 
 
 target_link_libraries(${PROJECT_NAME} PUBLIC MPI::MPI_CXX)
 target_include_directories(${PROJECT_NAME} PRIVATE load_balance)
+target_include_directories(${PROJECT_NAME} PRIVATE filters)
 target_link_libraries(${PROJECT_NAME} PUBLIC Load_Balance)
+target_link_libraries(${PROJECT_NAME} PUBLIC Filters)

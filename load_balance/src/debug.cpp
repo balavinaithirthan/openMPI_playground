@@ -1,4 +1,5 @@
 #include "debug.hpp"
+#include <mpi.h>
 
 namespace load_balance {
 void debug_vector(const std::vector<int> &vec) {
@@ -33,10 +34,17 @@ void print_vector(const std::vector<int> &vec) {
 }
 
 void print_filter_list(
-    std::vector<std::function<void(std::vector<int> &, int)>>
-        filter_list) {
+    std::vector<std::function<void(std::vector<int> &, int)>> filter_list) {
   for (int i = 0; i < filter_list.size(); i++) {
+    if (!filter_list[i]) {
+      std::cerr
+          << "Error: encountefewiofred an uninitialized function in filter_list"
+          << std::endl;
+      continue;
+    }
     printf("filter %d\n", i);
+    auto vec = std::vector<int>{1, 2, 3, 4, 5};
+    filter_list[i](vec, 0);
   }
 }
 

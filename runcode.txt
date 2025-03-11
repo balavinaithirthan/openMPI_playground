@@ -1,0 +1,2 @@
+// mpirun -np 5 ./hello_mpi
+// mpirun -np 4 xterm -e gdb -ex run --args ./MyMPIProject
