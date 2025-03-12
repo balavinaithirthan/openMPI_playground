@@ -52,10 +52,10 @@ void send_out_work(int children_num, std::vector<filters::Hit> parent_vec,
     MPI_Send(&chunk_size, 1, MPI_INT, i + 1, VEC_SIZE, MPI_COMM_WORLD);
     MPI_Send(chunk.data(), chunk.size(), hit_type, i + 1, VEC_DATA,
              MPI_COMM_WORLD);
-    // #if DEBUG == 1
-    //     printf("parent sending to %d\n", i + 1);
-    //     load_balance::debug_vector(chunk);
-    // #endif
+#if DEBUG_PARENT == 1
+    printf("parent sending to %d\n", i + 1);
+    load_balance::debug_vector(chunk);
+#endif
   }
   // send out last non even chunk
   int last_index = children_num - 1;
@@ -103,7 +103,7 @@ std::vector<filters::Hit> combine_work(int children_num) {
              MPI_COMM_WORLD, MPI_STATUS_IGNORE);
     sumVec.insert(sumVec.end(), chunkVec.begin(),
                   chunkVec.end()); // insert into the end of sumVec
-#if DEBUG == 1
+#if DEBUG_PARENT == 1
     std::cout << "parent receiving from " << childRank << std::endl;
     load_balance::debug_vector(chunkVec);
 #endif
@@ -117,10 +117,10 @@ std::vector<filters::Hit> combine_work(int children_num) {
 
 std::vector<filters::Hit> combineAndSendOutFn(const int children_num) {
   std::vector<filters::Hit> combined = combine_work(children_num);
-#if DEBUG == 1
+#if DEBUG_PARENT == 1
   load_balance::debug_vector(combined);
 #endif
-  // combined = flush(combined);
+  // combined = flush(combined); TODO: flush
   send_out_work(children_num, combined, EQUAL_CHUNKING);
   return combined;
 }

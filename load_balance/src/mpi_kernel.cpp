@@ -8,8 +8,11 @@ void MPI_kernel(
     const std::vector<std::tuple<int, int>> filter_order,
     std::vector<filters::Hit> &parent_vec) {
 
-  // print_filter_list(filter_list);
-  // print_filter_order(filter_order);
+#if DEBUG_INPUT
+  print_filter_list(filter_list);
+  print_filter_order(filter_order);
+#endif
+
   const int CHUNKS = number_of_procs - 1;
   if (number_of_procs < CHUNKS + 1) {
     std::cerr << "This program requires at least " << CHUNKS + 1
@@ -48,14 +51,11 @@ void MPI_kernel(
       children_code(filterSlice, rank);
     } else {
       auto vec = combineAndSendOutFn(CHUNKS);
-#if DEBUG == 1
+#if DEBUG_PARENT == 1
       load_balance::debug_vector(vec);
 #endif
     }
     filter_count++;
-#if DEBUG == 1
-    printf("filter count %d\n", filter_count);
-#endif
   }
   std::vector<filters::Hit> final;
   if (rank != 0) {
@@ -69,8 +69,7 @@ void MPI_kernel(
   } else {
     auto final = combine_work(CHUNKS);
     time_end(start, rank);
-    print_vector(final);
-#if SUPER_DEBUG == 1
+#if DEBUG_OUTPUT == 1
     load_balance::debug_vector(final);
 #endif
   }

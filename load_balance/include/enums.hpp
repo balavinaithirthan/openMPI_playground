@@ -1,6 +1,10 @@
 #pragma once
 
-#define DEBUG 0
+#define DEBUG_OUTPUT 1
+// #define DEBUG_INPUT 1
+// #define DEBUG_PARENT 1
+// #define DEBUG_CHILD 1
+
 // #define SUPER_DEBUG 1
 // #define TIMING 1
 // #define FINAL 1

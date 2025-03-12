@@ -4,16 +4,14 @@
 
 namespace load_balance {
 void debug_vector(const std::vector<filters::Hit> &vec) {
-#if SUPER_DEBUG == 1
   printf("[");
   for (int i = 0; i < vec.size(); i++) {
-    printf("%d", vec[i]);
+    printf("%d", vec[i].on);
     if (i != vec.size() - 1) {
       printf(", ");
     }
   }
   printf("]\n");
-#endif
 }
 
 void debug_indices(std::vector<std::tuple<int, int>> indices) {

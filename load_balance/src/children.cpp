@@ -36,25 +36,18 @@ void children_code(
   MPI_Recv(original_vector.data(), vec_size, hit_type, RANK_0, VEC_DATA,
            MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
-#if DEBUG == 1
+#if DEBUG_CHILD == 1
   printf("filter list has %lu\n", filter_list.size());
 #endif
   assert(filter_list.size() > 0);
   for (const auto &filterFun : filter_list) {
-    // if (!filterFun) {
-    //   std::cerr << "Error: encountered an uninitialized function in
-    //   filter_list" << std::endl; continue;
-    // }
-    // try {
     filterFun(original_vector, rank);
-    // } catch (const std::bad_function_call &e) {
-    //   std::cerr << "Error: bad function call - " << e.what() << std::endl;
-    //   continue;
-    // }
+#if DEBUG_CHILD == 1
     if (rank == 3) {
       printf("after\n");
       print_vector(original_vector);
     }
+#endif
     assert(original_vector.size() == vec_size);
   }
   int new_vec_size = original_vector.size();
@@ -62,9 +55,11 @@ void children_code(
   MPI_Send(&new_vec_size, 1, MPI_INT, RANK_0, VEC_SIZE, MPI_COMM_WORLD);
   MPI_Send(original_vector.data(), original_vector.size(), hit_type, RANK_0,
            VEC_DATA, MPI_COMM_WORLD);
-#if DEBUG == 1
-  std::cout << "child sending back " << std::endl;
-  load_balance::debug_vector(original_vector);
+#if DEBUG_CHILD == 1
+  if (rank == 3) {
+    std::cout << "child sending back " << std::endl;
+    load_balance::debug_vector(original_vector);
+  }
 #endif
 
   ///////////////////

@@ -62,9 +62,9 @@ int main(int argc, char **argv) {
   std::map<std::string, std::vector<size_t>> seedsTwoMap =
       filters::findSeeds(seq2, kmer_size);
   auto hits = filters::findHits(seedsTwoMap, seedsTwoMap, kmer_size);
-  if (rank == 0) {
-    load_balance::print_vector(hits);
-  }
+  // if (rank == 0) {
+  //   load_balance::print_vector(hits);
+  // }
 
   ////////////////
   ////////////////
