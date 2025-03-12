@@ -10,6 +10,9 @@ set(SourceFiles
     src/seed.cpp
     src/findHits.cpp
     src/gapped.cpp
+    src/anchor.cpp
+    src/hspthres.cpp
+    src/gapfree.cpp
     )
 
 add_library(${PROJECT_NAME} SHARED ${SourceFiles})

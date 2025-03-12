@@ -6,6 +6,7 @@
 // #define FINAL 1
 
 namespace load_balance {
+
 enum {
   RANK_0 = 0,
 };

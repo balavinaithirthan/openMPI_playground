@@ -35,7 +35,7 @@ void children_code(
   std::vector<filters::Hit> original_vector(vec_size);
   MPI_Recv(original_vector.data(), vec_size, hit_type, RANK_0, VEC_DATA,
            MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-  print_vector(original_vector);
+
 #if DEBUG == 1
   printf("filter list has %lu\n", filter_list.size());
 #endif
@@ -51,7 +51,10 @@ void children_code(
     //   std::cerr << "Error: bad function call - " << e.what() << std::endl;
     //   continue;
     // }
-    // printf("fopefjiowefjoiwefjowiefjweoifjwfjwefjweoo\n");
+    if (rank == 3) {
+      printf("after\n");
+      print_vector(original_vector);
+    }
     assert(original_vector.size() == vec_size);
   }
   int new_vec_size = original_vector.size();

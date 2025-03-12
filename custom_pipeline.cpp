@@ -1,6 +1,6 @@
-// goal pipeline = ./src/lastz_D small1.fa small2.fa --seed=match14
-// --recoverseeds
-// --format=none --gfextend --ydrop=10
+//--seed=match14 --recoverseeds --format=none --gfextend --exact=20 --nochain
+//--hspthresh=top.1% --nogapped
+
 #include "Load_Balance.hpp"
 #include "debug.hpp"
 #include "filters.hpp"
@@ -45,11 +45,17 @@ int main(int argc, char **argv) {
   const std::string seq1 = std::string(PROBLEM_SIZE, 'A');
   const std::string seq2 = std::string(PROBLEM_SIZE, 'A');
   const int kmer_size = 10;
-  auto filter_order = {std::make_tuple(0, 1)};
+  auto filter_order = {std::make_tuple(0, 3)};
   std::vector<std::function<void(std::vector<filters::Hit> &, int)>>
       filter_list = {[&](std::vector<filters::Hit> &vec, int rank) {
-        filters::gappedCompute(vec, seq1, seq2);
-      }};
+                       filters::gapFreeCompute(vec, seq1, seq2);
+                     },
+                     [&](std::vector<filters::Hit> &vec, int rank) {
+                       filters::anchorCompute(vec, seq1, seq2);
+                     },
+                     [&](std::vector<filters::Hit> &vec, int rank) {
+                       filters::hspthreshCompute(vec, seq1, seq2);
+                     }};
 
   std::map<std::string, std::vector<size_t>> seedsOneMap =
       filters::findSeeds(seq1, kmer_size);

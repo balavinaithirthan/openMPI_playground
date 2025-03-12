@@ -1,4 +1,8 @@
+#include "include/anchor.hpp"
 #include "include/debug.hpp"
 #include "include/findHits.hpp"
+#include "include/gapfree.hpp"
+#include "include/gapped.hpp"
 #include "include/helloworld.hpp"
+#include "include/hspthres.hpp"
 #include "include/seed.hpp"

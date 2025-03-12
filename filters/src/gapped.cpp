@@ -1,46 +1,68 @@
 #include "gapped.hpp"
 
-// Todo, masking
 namespace filters {
-
 void gappedCompute(std::vector<filters::Hit> &hits, const std::string &query,
                    const std::string &reference) {
-  // for (auto &hit : hits) {
-  //   if (hit.on == true) {
-  //     gappedFilter(hit, query, reference);
-  //   }
-  // }
+  // printf("gappedCompute\n");
+  for (auto &hit : hits) {
+    if (hit.on) {
+      gappedFilter(hit, query, reference);
+    }
+  }
 }
 
-// TODO: how bad is this for loop compared to checking if true
+const int MATCH = 2;
+const int MISMATCH = -1;
+const int GAP_OPEN = -2;
+const int GAP_EXTEND = -1;
 
 void gappedFilter(Hit &hit, const std::string &query,
                   const std::string &reference) {
+  int m = query.size();
+  int n = reference.size();
 
-  // auto x1 = hit.getX();
-  // auto y1 = hit.getY();
-  // auto x2 = hit.getX() + hit.length;
-  // auto y2 = hit.getY() + hit.length;
+  // Smith-Waterman DP table
+  std::vector<std::vector<int>> dp(m + 1, std::vector<int>(n + 1, 0));
+  std::vector<std::vector<int>> trace(m + 1, std::vector<int>(n + 1, 0));
 
-  // // right side
-  // auto i = y2;
-  // auto j = x2;
-  // while (i < query.size() && j < reference.size() &&
-  //        query.at(i) == reference.at(j)) {
-  //   hit.length += 1;
-  //   i += 1;
-  //   j += 1;
-  // }
+  int max_score = 0, max_i = 0, max_j = 0;
 
-  // i = y1;
-  // j = x1;
-  // // left side
-  // while (i > 0 && j > 0 && query.at(i) == reference.at(j)) {
-  //   hit.length += 1;
-  //   i -= 1;
-  //   j -= 1;
-  //   std::get<0>(hit.position) -= 1;
-  //   std::get<1>(hit.position) -= 1;
-  // }
+  // Fill DP table
+  for (int i = 1; i <= m; ++i) {
+    for (int j = 1; j <= n; ++j) {
+      int match = dp[i - 1][j - 1] +
+                  (query[i - 1] == reference[j - 1] ? MATCH : MISMATCH);
+      int gap_x = dp[i - 1][j] + GAP_EXTEND;
+      int gap_y = dp[i][j - 1] + GAP_EXTEND;
+
+      dp[i][j] = std::max({0, match, gap_x, gap_y});
+
+      if (dp[i][j] > max_score) {
+        max_score = dp[i][j];
+        max_i = i;
+        max_j = j;
+      }
+    }
+  }
+
+  // Backtrack to find the best alignment start
+  int i = max_i, j = max_j;
+  while (i > 0 && j > 0 && dp[i][j] > 0) {
+    if (dp[i][j] == dp[i - 1][j - 1] +
+                        (query[i - 1] == reference[j - 1] ? MATCH : MISMATCH)) {
+      --i;
+      --j;
+    } else if (dp[i][j] == dp[i - 1][j] + GAP_EXTEND) {
+      --i;
+    } else {
+      --j;
+    }
+  }
+
+  // Update hit with the best extended alignment
+  hit.position_x = i;
+  hit.position_y = j;
+  hit.length = std::max(max_i - i, max_j - j);
 }
+
 } // namespace filters
