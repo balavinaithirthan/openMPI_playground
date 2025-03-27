@@ -10,7 +10,7 @@ void MPI_kernel(const int number_of_procs, const int rank, const std::function<v
               << " processes.\n ";
     MPI_Abort(MPI_COMM_WORLD, 1);
   }
-  auto start = time_start();
+  auto start = std::chrono::time_point<std::chrono::steady_clock>();
 
   if (rank == 0) {
     std::vector<int> parent_vec(problem_size);

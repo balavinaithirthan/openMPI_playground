@@ -1,5 +1,6 @@
 #include <iostream>
 #include <chrono>
+#include "enums.hpp"
 
 namespace load_balance {
 

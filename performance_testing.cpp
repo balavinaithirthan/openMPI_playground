@@ -7,18 +7,19 @@
 #include <tuple>
 #include <chrono>
 #include <mpi.h>
+
+
+
 const auto COMPUTE_BOUND = load_balance::calculateSumVec;
 const auto MEMORY_BOUND = load_balance::memoryBoundFilter;
-// enum {
-//     MEMORY_BOUND = 1,
-//     NEEDLEMAN_WUNSCH = 2,
-// };
-const int PROBLEM_SIZE = 100;
-const int FILTER_NUMBER = 25;
+const int PROBLEM_SIZE = 10000;
+const int FILTER_NUMBER = 50;
 
 std::vector<std::tuple<int, int>> FILTER_ORDER = {
-    std::make_tuple(0, 5), std::make_tuple(5, 10), std::make_tuple(10, 15), std::make_tuple(15, 20), std::make_tuple(20, 25)
+    std::make_tuple(0, FILTER_NUMBER)
     };
+    // this way copy isn't too costly (only 2 copies)
+
 
 
 void test_modulate_filters(int size, int rank, int filter_number) {
@@ -34,12 +35,15 @@ void test_modulate_problem_size(int size, int rank, int problem_size) {
     
 }
 
-void test_modulate_number_of_procs() {
-    
+void test_modulate_number_of_procs(int size, int rank) {
+    if (rank == 0)
+        std::cout << "Testing number of procs.  " << std::endl;
+    load_balance::MPI_kernel(size, rank, COMPUTE_BOUND, FILTER_NUMBER, PROBLEM_SIZE, FILTER_ORDER);
+
 }
 
 void test_modulate_function_type(int size, int rank) {
     if (rank == 0)
         std::cout << "Testing modulate function type. The function type is " << std::endl;
-    load_balance::MPI_kernel(size, rank, MEMORY_BOUND, FILTER_NUMBER, PROBLEM_SIZE, FILTER_ORDER);
+    load_balance::MPI_kernel(size, rank, COMPUTE_BOUND, FILTER_NUMBER, PROBLEM_SIZE, FILTER_ORDER);
 }

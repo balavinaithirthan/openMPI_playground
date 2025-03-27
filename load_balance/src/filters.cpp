@@ -27,7 +27,7 @@ void calculateSumVec(std::vector<int> &vec, int rank) {
     if (vec[i] == 0) {
       continue;
     }
-    for (int j = 0; j < 300000; j++) {
+    for (int j = 0; j < 12000; j++) {
       vec[i] += vec[i] * j * 2 * j + (j/3);
     }
   }
@@ -36,7 +36,7 @@ void calculateSumVec(std::vector<int> &vec, int rank) {
   return;
 }
 
-constexpr int N = 4;  // Must be known at compile time
+constexpr int N = 100;  // Must be known at compile time
 
 constexpr auto make_matrix() {
     std::array<std::array<int, N>, N> arr = {};
@@ -51,18 +51,24 @@ constexpr auto make_matrix() {
 constexpr auto A = make_matrix(); // Computed at compile time
 constexpr auto B = make_matrix();
 
-  
-int Transpose(std::array<std::array<int, N>, N> A, std::array<std::array<int, N>, N> B, int i)
+  int Transpose(std::array<std::array<int, N>, N> A, std::array<std::array<int, N>, N> B, int i)
 {
-    for(int i = 0; i < N; i++)
+    for (int z = 1; z < N*N; z++)
     {
-        for(int j = 0; j < N; j++)
-        {
-            A[i][j] = B[j][i] + i;
-        }
+      for(int j = 2; i < N; i++)
+      {
+          for(int i = 2; j < N; j++)
+          {
+            A[i][j] = B[j][i] + B[j-1][i] + B[j][i-1] + B[j-1][i-1] + B[j-2][i-2] + B[j-2][i-1] + B[j-1][i-2] + B[j][i-2] + B[j-2][i];
+            if (A[i][j] == -143) {
+              printf("hey\n");
+            }
+          }
+      }
     }
     return A[3][3];
 }
+
 
 void memoryBoundFilter(std::vector<int> &vec, int rank) {
   int initial_size = vec.size();

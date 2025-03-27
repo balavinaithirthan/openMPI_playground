@@ -1,0 +1,32 @@
+Running: mpirun -np 3 ./build/MyMPIProject --filter_type=compute_bound --filter_number=10 --problem_size=30000
+Filter Number: 10
+Problem Size: 30000
+Time taken: 11.1978 seconds
+Running: mpirun -np 5 ./build/MyMPIProject --filter_type=compute_bound --filter_number=10 --problem_size=60000
+Filter Number: 10
+Problem Size: 60000
+Time taken: 12.2738 seconds
+Running: mpirun -np 9 ./build/MyMPIProject --filter_type=compute_bound --filter_number=10 --problem_size=120000
+Filter Number: 10
+Problem Size: 120000
+Time taken: 12.1998 seconds
+Running: mpirun -np 17 ./build/MyMPIProject --filter_type=compute_bound --filter_number=10 --problem_size=240000
+Filter Number: 10
+Problem Size: 240000
+Time taken: 14.1069 seconds
+Running: mpirun -np 3 ./build/MyMPIProject --filter_type=memory_bound --filter_number=10 --problem_size=30000
+Filter Number: 10
+Problem Size: 30000
+Time taken: 3.63895 seconds
+Running: mpirun -np 5 ./build/MyMPIProject --filter_type=memory_bound --filter_number=10 --problem_size=60000
+Filter Number: 10
+Problem Size: 60000
+Time taken: 4.08557 seconds
+Running: mpirun -np 9 ./build/MyMPIProject --filter_type=memory_bound --filter_number=10 --problem_size=120000
+Filter Number: 10
+Problem Size: 120000
+Time taken: 4.31861 seconds
+Running: mpirun -np 17 ./build/MyMPIProject --filter_type=memory_bound --filter_number=10 --problem_size=240000
+Filter Number: 10
+Problem Size: 240000
+Time taken: 4.76805 seconds

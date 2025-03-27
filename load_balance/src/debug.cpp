@@ -35,9 +35,11 @@ void print_vector(const std::vector<int> &vec) {
 void print_filter_list(
     std::vector<std::function<void(std::vector<int> &, int)>>
         filter_list) {
+#if DEBUG == 1
   for (int i = 0; i < filter_list.size(); i++) {
     printf("filter %d\n", i);
   }
+#endif
 }
 
 } // namespace load_balance
