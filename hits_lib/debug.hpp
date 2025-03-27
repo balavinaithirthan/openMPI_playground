@@ -3,7 +3,7 @@
 #include <iostream>
 #include <map>
 namespace hits_lib {
-inline void debug_hits(std::vector<hit_lib::Hit> hits) {
+inline void debug_hits(std::vector<Hit> hits) {
   for (double i = 0; i < hits.size(); i++) {
     std::cout << "Hit " << i << " is at position " << hits[i].getX() << ", "
               << hits[i].getY() << " with length " << hits[i].length
@@ -84,14 +84,6 @@ inline void print_filter_order(std::vector<std::tuple<int, int>> filter_order) {
   for (const auto &filter : filter_order) {
     std::cout << "filter slice is " << std::get<0>(filter) << " "
               << std::get<1>(filter) << std::endl;
-  }
-}
-
-inline void debug_hits(std::vector<hits_lib::Hit> hits) {
-  for (double i = 0; i < hits.size(); i++) {
-    std::cout << "Hit " << i << " is at position " << hits[i].getX() << ", "
-              << hits[i].getY() << " with length " << hits[i].length
-              << std::endl;
   }
 }
 } // namespace hits_lib

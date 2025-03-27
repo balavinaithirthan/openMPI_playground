@@ -21,4 +21,5 @@ set(SourceFiles
 add_library(Filters SHARED ${SourceFiles})
 # message(STATUS "Filters project name is ${PROJECT_NAME}")
 target_include_directories(Filters PUBLIC include)
+target_include_directories(Filters PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(Filters PUBLIC hits_lib)

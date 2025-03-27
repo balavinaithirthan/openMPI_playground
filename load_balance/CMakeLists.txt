@@ -18,6 +18,7 @@ set(SourceFiles
 add_library(${PROJECT_NAME} SHARED ${SourceFiles})
 
 target_include_directories(Load_Balance PUBLIC include) #Include directory for the Load_Balance library, offer it to its dependencies
+target_include_directories(Load_Balance PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}) #Include directory for the Load_Balance library, offer it to its dependencies
 target_link_libraries(Load_Balance PUBLIC hits_lib) #Link to the hits_lib library
 target_link_libraries(Load_Balance PUBLIC MPI::MPI_CXX)
 
