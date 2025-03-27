@@ -1,5 +1,4 @@
 #include "parent.hpp"
-#include "debug.hpp"
 #include <iostream>
 namespace load_balance {
 std::vector<hits_lib::Hit> flush(const std::vector<hits_lib::Hit> &vec) {
@@ -20,29 +19,7 @@ std::vector<hits_lib::Hit> flush(const std::vector<hits_lib::Hit> &vec) {
 
 void send_out_work(int children_num, std::vector<hits_lib::Hit> parent_vec,
                    int redistribution_strategy) {
-
-  MPI_Datatype hit_type;
-  {
-    hits_lib::Hit temp_hit;
-
-    // Define the data types for each member of the Hit class
-    int block_lengths[4] = {1, 1, 1, 1};
-    MPI_Datatype types[4] = {MPI_C_BOOL, MPI_DOUBLE, MPI_UNSIGNED_LONG,
-                             MPI_UNSIGNED_LONG};
-    MPI_Aint displacements[4];
-
-    // Calculate the displacements of each field
-    displacements[0] = offsetof(hits_lib::Hit, on);         // bool on
-    displacements[1] = offsetof(hits_lib::Hit, length);     // double length
-    displacements[2] = offsetof(hits_lib::Hit, position_x); // size_t position_x
-    displacements[3] = offsetof(hits_lib::Hit, position_y); // size_t position_y
-
-    MPI_Type_create_struct(4, block_lengths, displacements, types, &hit_type);
-    MPI_Type_commit(&hit_type);
-  };
-
-  ///////////////////
-
+  auto HIT_TYPE = hits_lib::get_hit_type();
   int chunk_size = parent_vec.size() / children_num;
   assert(chunk_size != 0);
   for (int i = 0; i < children_num - 1; i++) {
@@ -50,7 +27,7 @@ void send_out_work(int children_num, std::vector<hits_lib::Hit> parent_vec,
                                      parent_vec.begin() +
                                          ((i + 1) * chunk_size));
     MPI_Send(&chunk_size, 1, MPI_INT, i + 1, VEC_SIZE, MPI_COMM_WORLD);
-    MPI_Send(chunk.data(), chunk.size(), hit_type, i + 1, VEC_DATA,
+    MPI_Send(chunk.data(), chunk.size(), HIT_TYPE, i + 1, VEC_DATA,
              MPI_COMM_WORLD);
 #if DEBUG_PARENT == 1
     printf("parent sending to %d\n", i + 1);
@@ -64,34 +41,13 @@ void send_out_work(int children_num, std::vector<hits_lib::Hit> parent_vec,
   size_t final_chunk_size = chunk.size();
   MPI_Send(&final_chunk_size, 1, MPI_INT, last_index + 1, VEC_SIZE,
            MPI_COMM_WORLD);
-  MPI_Send(chunk.data(), chunk.size(), hit_type, last_index + 1, VEC_DATA,
+  MPI_Send(chunk.data(), chunk.size(), HIT_TYPE, last_index + 1, VEC_DATA,
            MPI_COMM_WORLD);
-
-  ///////////////////
-  MPI_Type_free(&hit_type);
 }
 
 std::vector<hits_lib::Hit> combine_work(int children_num) {
-  MPI_Datatype hit_type;
-  {
-    hits_lib::Hit temp_hit;
 
-    // Define the data types for each member of the Hit class
-    int block_lengths[4] = {1, 1, 1, 1};
-    MPI_Datatype types[4] = {MPI_C_BOOL, MPI_DOUBLE, MPI_UNSIGNED_LONG,
-                             MPI_UNSIGNED_LONG};
-    MPI_Aint displacements[4];
-
-    // Calculate the displacements of each field
-    displacements[0] = offsetof(hits_lib::Hit, on);         // bool on
-    displacements[1] = offsetof(hits_lib::Hit, length);     // double length
-    displacements[2] = offsetof(hits_lib::Hit, position_x); // size_t position_x
-    displacements[3] = offsetof(hits_lib::Hit, position_y); // size_t position_y
-
-    MPI_Type_create_struct(4, block_lengths, displacements, types, &hit_type);
-    MPI_Type_commit(&hit_type);
-  };
-  ///////////////////
+  auto HIT_TYPE = hits_lib::get_hit_type();
 
   std::vector<hits_lib::Hit> sumVec;
   for (int childRank = 1; childRank < children_num + 1; childRank++) {
@@ -99,7 +55,7 @@ std::vector<hits_lib::Hit> combine_work(int children_num) {
     MPI_Recv(&chunkSize, 1, MPI_INT, childRank, VEC_SIZE, MPI_COMM_WORLD,
              MPI_STATUS_IGNORE);
     std::vector<hits_lib::Hit> chunkVec(chunkSize);
-    MPI_Recv(chunkVec.data(), chunkSize, hit_type, childRank, VEC_DATA,
+    MPI_Recv(chunkVec.data(), chunkSize, HIT_TYPE, childRank, VEC_DATA,
              MPI_COMM_WORLD, MPI_STATUS_IGNORE);
     sumVec.insert(sumVec.end(), chunkVec.begin(),
                   chunkVec.end()); // insert into the end of sumVec
@@ -108,9 +64,6 @@ std::vector<hits_lib::Hit> combine_work(int children_num) {
     load_balance::debug_vector(chunkVec);
 #endif
   }
-  ///////////////////
-  MPI_Type_free(&hit_type);
-  ///////////////////
 
   return sumVec;
 }
