@@ -52,17 +52,6 @@ inline void debug_indices(std::vector<std::tuple<int, int>> indices) {
   }
 }
 
-inline void print_vector(const std::vector<hits_lib::Hit> &vec) {
-  printf("[");
-  for (int i = 0; i < vec.size(); i++) {
-    printf("%d", vec[i].on);
-    if (i != vec.size() - 1) {
-      printf(", ");
-    }
-  }
-  printf("]\n");
-}
-
 inline void print_filter_list(
     std::vector<std::function<void(std::vector<hits_lib::Hit> &, int)>>
         filter_list) {
@@ -80,10 +69,23 @@ inline void print_filter_list(
   }
 }
 
-inline void print_filter_order(std::vector<std::tuple<int, int>> filter_order) {
-  for (const auto &filter : filter_order) {
-    std::cout << "filter slice is " << std::get<0>(filter) << " "
-              << std::get<1>(filter) << std::endl;
+class ScopedTimer {
+public:
+  ScopedTimer(const std::string &label, int rank) : label(label), rank(rank) {
+    start_ = std::chrono::high_resolution_clock::now();
   }
-}
+  ~ScopedTimer() {
+    auto end = std::chrono::high_resolution_clock::now();
+    auto duration =
+        std::chrono::duration_cast<std::chrono::milliseconds>(end - start_);
+    std::cout << label << "with rank" << rank << "took " << duration.count()
+              << "ms" << std::endl;
+  }
+
+private:
+  int rank;
+  std::string label;
+  std::chrono::time_point<std::chrono::high_resolution_clock> start_;
+};
+
 } // namespace hits_lib
