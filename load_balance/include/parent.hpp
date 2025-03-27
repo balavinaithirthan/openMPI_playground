@@ -1,4 +1,6 @@
 #pragma once
+#include "datatype.hpp"
+#include "debug.hpp"
 #include "enums.hpp"
 #include "hit.hpp"
 #include "load_balance_indices.hpp"
