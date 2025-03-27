@@ -3,7 +3,7 @@
 // Todo, masking
 namespace filters {
 
-void gapFreeCompute(std::vector<filters::Hit> &hits, const std::string &query,
+void gapFreeCompute(std::vector<hits_lib::Hit> &hits, const std::string &query,
                     const std::string &reference) {
   for (auto &hit : hits) {
     if (hit.on == true) {
@@ -14,7 +14,7 @@ void gapFreeCompute(std::vector<filters::Hit> &hits, const std::string &query,
 
 // TODO: how bad is this for loop compared to checking if true
 
-void gapFreeCompute(Hit &hit, const std::string &query,
+void gapFreeCompute(hits_lib::Hit &hit, const std::string &query,
                     const std::string &reference) {
   auto x1 = hit.getX();
   auto y1 = hit.getY();

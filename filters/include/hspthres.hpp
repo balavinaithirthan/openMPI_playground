@@ -4,10 +4,10 @@
 
 namespace filters {
 
-void hspthreshCompute(std::vector<filters::Hit> &hits, const std::string &query,
-                      const std::string &reference);
+void hspthreshCompute(std::vector<hits_lib::Hit> &hits,
+                      const std::string &query, const std::string &reference);
 
-void hspthreshFilter(Hit &hit, const std::string &query,
+void hspthreshFilter(hits_lib::Hit &hit, const std::string &query,
                      const std::string &reference);
 
 } // namespace filters

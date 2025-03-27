@@ -15,7 +15,10 @@ set(SourceFiles
     src/gapfree.cpp
     )
 
-add_library(${PROJECT_NAME} SHARED ${SourceFiles})
 
-target_include_directories(${PROJECT_NAME} PUBLIC include)
-target_include_directories(${PROJECT_NAME} PRIVATE ../hits_stuff)
+
+
+add_library(Filters SHARED ${SourceFiles})
+# message(STATUS "Filters project name is ${PROJECT_NAME}")
+target_include_directories(Filters PUBLIC include)
+target_link_libraries(Filters PUBLIC hits_lib)

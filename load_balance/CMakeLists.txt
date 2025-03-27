@@ -7,7 +7,6 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(SourceFiles 
     src/helloworld.cpp
-    src/debug.cpp
     src/load_balance_indices.cpp
     src/children.cpp
     src/parent.cpp
@@ -18,7 +17,11 @@ set(SourceFiles
 
 add_library(${PROJECT_NAME} SHARED ${SourceFiles})
 
-target_include_directories(${PROJECT_NAME} PUBLIC include)
-target_include_directories(${PROJECT_NAME} PRIVATE ../hits_stuff) # TODO: pull out the Hit.hpp file and put it in a separate include directory
-target_link_libraries(${PROJECT_NAME} PUBLIC MPI::MPI_CXX)
+target_include_directories(Load_Balance PUBLIC include) #Include directory for the Load_Balance library, offer it to its dependencies
+target_link_libraries(Load_Balance PUBLIC hits_lib) #Link to the hits_lib library
+target_link_libraries(Load_Balance PUBLIC MPI::MPI_CXX)
+
+# get_target_property(LINK_LIBS Load_Balance LINK_LIBRARIES)
+# message(STATUS "MyTarget links to: ${LINK_LIBS}")
+
 

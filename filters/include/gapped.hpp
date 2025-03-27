@@ -3,9 +3,9 @@
 #include <vector>
 
 namespace filters {
-void gappedCompute(std::vector<filters::Hit> &hits, const std::string &query,
+void gappedCompute(std::vector<hits_lib::Hit> &hits, const std::string &query,
                    const std::string &reference);
-void gappedFilter(Hit &hit, const std::string &query,
+void gappedFilter(hits_lib::Hit &hit, const std::string &query,
                   const std::string &reference);
 
 } // namespace filters

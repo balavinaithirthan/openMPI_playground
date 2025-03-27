@@ -2,10 +2,10 @@
 
 namespace filters {
 
-std::vector<Hit> findHits(std::map<std::string, std::vector<size_t>> a,
-                          std::map<std::string, std::vector<size_t>> b,
-                          double n) {
-  std::vector<Hit> hits;
+std::vector<hits_lib::Hit>
+findHits(std::map<std::string, std::vector<size_t>> a,
+         std::map<std::string, std::vector<size_t>> b, double n) {
+  std::vector<hits_lib::Hit> hits;
   for (const auto &entry : a) {
     const std::string &seed = entry.first;
     if (b.find(seed) != b.end()) { // if seed exists in b

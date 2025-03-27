@@ -1,7 +1,7 @@
 #include "gapped.hpp"
 
 namespace filters {
-void gappedCompute(std::vector<filters::Hit> &hits, const std::string &query,
+void gappedCompute(std::vector<hits_lib::Hit> &hits, const std::string &query,
                    const std::string &reference) {
   // printf("gappedCompute\n");
   for (auto &hit : hits) {
@@ -16,7 +16,7 @@ const int MISMATCH = -1;
 const int GAP_OPEN = -2;
 const int GAP_EXTEND = -1;
 
-void gappedFilter(Hit &hit, const std::string &query,
+void gappedFilter(hits_lib::Hit &hit, const std::string &query,
                   const std::string &reference) {
   int m = query.size();
   int n = reference.size();

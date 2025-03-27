@@ -3,9 +3,9 @@
 #include <vector>
 
 namespace filters {
-void anchorCompute(std::vector<filters::Hit> &hits, const std::string &query,
+void anchorCompute(std::vector<hits_lib::Hit> &hits, const std::string &query,
                    const std::string &reference);
 
-void anchorFilter(Hit &hit, const std::string &query,
+void anchorFilter(hits_lib::Hit &hit, const std::string &query,
                   const std::string &reference);
 } // namespace filters

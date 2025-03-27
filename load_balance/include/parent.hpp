@@ -8,12 +8,12 @@
 #include <tuple>
 #include <vector>
 namespace load_balance {
-std::vector<filters::Hit> flush(const std::vector<filters::Hit> &vec);
+std::vector<hits_lib::Hit> flush(const std::vector<hits_lib::Hit> &vec);
 
-void send_out_work(int children_num, std::vector<filters::Hit> parent_vec,
+void send_out_work(int children_num, std::vector<hits_lib::Hit> parent_vec,
                    int redistribution_strategy);
 
-std::vector<filters::Hit> combine_work(int children_num);
+std::vector<hits_lib::Hit> combine_work(int children_num);
 
-std::vector<filters::Hit> combineAndSendOutFn(const int children_num);
+std::vector<hits_lib::Hit> combineAndSendOutFn(const int children_num);
 } // namespace load_balance

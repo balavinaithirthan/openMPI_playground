@@ -1,6 +1,7 @@
+#pragma once
 #include "hit.hpp"
 #include <iostream>
-
+#include <map>
 namespace filters {
 inline void debug_hits(std::vector<Hit> hits) {
   for (double i = 0; i < hits.size(); i++) {
@@ -17,5 +18,20 @@ inline void debug_filter_order(std::vector<std::tuple<int, int>> filter_order) {
   }
 }
 
-inline void debug_filter_list() {}
+inline void
+debug_seed_hits(std::map<std::string, std::vector<size_t>> seedsOneMap,
+                std::map<std::string, std::vector<size_t>> seedsTwoMap) {
+  for (auto const &pair : seedsOneMap) {
+    std::cout << "Key: " << pair.first << std::endl;
+    for (auto const &val : pair.second) {
+      std::cout << "Value: " << val << std::endl;
+    }
+  }
+  for (auto const &pair : seedsTwoMap) {
+    std::cout << "Key: " << pair.first << std::endl;
+    for (auto const &val : pair.second) {
+      std::cout << "Value: " << val << std::endl;
+    }
+  }
+}
 } // namespace filters
