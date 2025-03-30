@@ -4,7 +4,6 @@
 #include "enums.hpp"
 #include "hit.hpp"
 #include "parent.hpp"
-#include "timing.hpp"
 #include <functional>
 #include <iostream>
 #include <mpi.h>

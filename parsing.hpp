@@ -33,3 +33,20 @@ inline std::vector<hits_lib::Hit> parseHits(const std::string &file_path) {
 
   return hits;
 }
+
+inline std::string extract_fasta_file(const std::string &fasta_file) {
+  std::ifstream file(fasta_file);
+  if (!file) {
+    std::cerr << "Error opening file: " << fasta_file << std::endl;
+    return "";
+  }
+
+  std::string line;
+  std::string sequence;
+  while (std::getline(file, line)) {
+    if (line[0] == '>')
+      continue; // Skip header lines
+    sequence += line;
+  }
+  return sequence;
+}

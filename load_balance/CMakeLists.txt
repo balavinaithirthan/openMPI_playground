@@ -12,7 +12,6 @@ set(SourceFiles
     src/parent.cpp
     src/filters_load_balance.cpp
     src/mpi_kernel.cpp
-    src/timing.cpp
     )
 
 add_library(${PROJECT_NAME} SHARED ${SourceFiles})

@@ -72,6 +72,7 @@ inline void print_filter_list(
 class ScopedTimer {
 public:
   ScopedTimer(const std::string &label, int rank) : label(label), rank(rank) {
+    printf("%s with rank %d \n", label.c_str(), rank);
     start_ = std::chrono::high_resolution_clock::now();
   }
   ~ScopedTimer() {
@@ -87,5 +88,16 @@ private:
   std::string label;
   std::chrono::time_point<std::chrono::high_resolution_clock> start_;
 };
+
+// use ScropedTimer to measure the time taken by a function
+/*
+example:
+void my_function() {
+  ScopedTimer timer("my_function", rank);
+  // function code
+}
+
+
+*/
 
 } // namespace hits_lib
